@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo/logo-no-background.svg" alt="StepCount Logo" width="220" />
+  <img src="docs/logo/logo.svg" alt="StepCount Logo" width="220" />
 </p>
 
 # StepCount
@@ -46,3 +46,4 @@ Detailed architectural guidelines, UI layouts, and quality standards are maintai
 - [Engineering Leash (docs/leash.md)](docs/leash.md) – Mandatory coding rules, clean architecture patterns, testing thresholds, and pre-commit checks.
 - [Material Icons Reference (docs/icons.md)](docs/icons.md) – Mapping of all vector symbols and Google Fonts references.
 - [Vector Assets (docs/icons/svg/)](docs/icons/svg/) – Downloaded SVG icon assets for the Android application.
+- [Project Changelog (docs/CHANGELOG.md)](docs/CHANGELOG.md) – Version history and release notes.
