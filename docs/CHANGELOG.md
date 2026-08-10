@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Automated Unit Testing & Linting:** 100% test pass rate across DAOs, repositories, and ViewModels with 0 Android Lint errors.
 
 ### Fixed
+- **Dashboard String Format Crash:** Resolved `UnknownFormatConversionException` on the Dashboard screen caused by an unescaped `%` character in the daily goal and percentage progress text.
 - **Firebase Initialization Crash:** Added defensive initialization and fallback in `FirebaseAuthService` preventing startup crashes when `google-services.json` is not yet configured, allowing seamless offline and Guest Mode operation.
 
 ---
