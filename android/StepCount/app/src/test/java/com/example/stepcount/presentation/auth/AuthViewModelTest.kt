@@ -1,6 +1,5 @@
 package com.example.stepcount.presentation.auth
 
-import com.example.stepcount.domain.model.Resource
 import com.example.stepcount.domain.model.UserProfile
 import com.example.stepcount.domain.repository.AuthRepository
 import io.mockk.coEvery
@@ -16,10 +15,15 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * Unit tests verifying AuthViewModel validation, login, and registration flows.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthViewModelTest {
 

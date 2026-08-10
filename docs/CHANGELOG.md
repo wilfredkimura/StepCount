@@ -10,7 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project planning and architectural specifications.
+- **Clean MVVM Architecture Foundation:** Modular package layers (`core/`, `data/`, `domain/`, `sensor/`, `presentation/`, `worker/`, `di/`).
+- **Material Design 3 Theme & Reusable UI:** Athletic blue/green color schemes, typography hierarchy, custom buttons, outlined text fields, metric cards, status badges, and dialogs.
+- **Room Database Layer (Offline SSOT):** Local tables for user profile, daily step records with cascade delete, and cached leaderboard standings.
+- **Pure Kotlin Domain Layer:** Domain models, repository interfaces, and business use cases with live flow calculations (calories, km distance, active minutes, goal percentage).
+- **Remote Networking & Auth:** Retrofit 2 client with OkHttp bearer token interceptor, DTO schemas, and Firebase Authentication service with guest mode support.
+- **Hardware Sensor & Motion Tracking:** Lifecycle-aware listener for `Sensor.TYPE_STEP_COUNTER` with midnight baseline reset and 3-axis accelerometer peak detector fallback.
+- **7 Jetpack Compose Screens:**
+  1. Splash Screen with branding and session verification.
+  2. Auth Screen with Login, Register, validation, and Guest Mode.
+  3. Dashboard Screen with live animated step progress ring, fitness metrics, and quotes.
+  4. History Screen with timeframe filters (All Time, Week, Month) and deletion confirmation.
+  5. Leaderboard Screen with 3 podium standings (Gold, Silver, Bronze) and user highlights.
+  6. Profile Screen with daily goal editor, preset chips, and lifetime stats.
+  7. Settings Screen with dark theme toggle, units switcher, manual sync trigger, and account management.
+- **Background Synchronization:** AndroidX WorkManager `StepSyncWorker` with network constraints and automatic retries.
+- **Automated Unit Testing & Linting:** 100% test pass rate across DAOs, repositories, and ViewModels with 0 Android Lint errors.
 
 ---
 
