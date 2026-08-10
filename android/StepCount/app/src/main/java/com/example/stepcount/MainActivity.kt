@@ -7,12 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import com.example.stepcount.core.theme.StepCountTheme
+import com.example.stepcount.presentation.navigation.AppNavGraph
 
 /**
- * Main Activity serving as the single-activity host for the StepCount application.
+ * Main Activity hosting the Jetpack Compose navigation graph and theme.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,8 +24,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Navigation Host will be connected here in Phase 6
-                    Text(text = "StepCount Ready")
+                    AppNavGraph()
                 }
             }
         }
