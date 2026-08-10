@@ -205,7 +205,7 @@ fun DashboardScreen(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Goal: %,d (${state.goalPercentage}%)".format(state.dailyGoal),
+                        text = "Goal: ${String.format(Locale.US, "%,d", state.dailyGoal)} (${state.goalPercentage}%)",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
