@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.example.stepcount"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.stepcount"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
 
