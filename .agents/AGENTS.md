@@ -27,8 +27,21 @@ For all code generation, refactoring, testing, and modifications in this workspa
 
 ---
 
-## 3. Changelog Maintenance Rules
-All modifications and version increments must be tracked in [docs/CHANGELOG.md](file:///c:/Users/kimushzyyy/Documents/SCHOOL%20PROJECTS%203.2/StepCount/docs/CHANGELOG.md) adhering to the **Keep a Changelog** standard:
+## 3. Code Commenting & Explanation Standards
+
+### 3.1 Plain English & Simple Explanations (No Complex Jargon)
+- **Thorough & Clear Comments:** Every class, function, database query, sensor calculation, and UI component must have comments explaining what it does.
+- **Simple, Direct Language:** Use plain English. Avoid heavy academic jargon, overly complicated buzzwords, and dense technical phrasing.
+- **Focus on Purpose and Logic:** Explain *why* a step is being done in a way that any developer or reviewer can immediately follow.
+
+**Example Comparison:**
+- ❌ *Avoid:* "Idempotent transactional mutation delegates to repository abstraction utilizing asynchronous reactive dispatchers."
+- ✅ *Use:* "Saves today's step count to the local Room database. If there is no internet connection, it marks the record as not synced so we can upload it later when online."
+
+---
+
+## 4. Changelog Maintenance Rules
+All modifications and version increments must be tracked in [CHANGELOG.md](file:///c:/Users/kimushzyyy/Documents/SCHOOL%20PROJECTS%203.2/StepCount/CHANGELOG.md) adhering to the **Keep a Changelog** standard:
 
 1. **Continuous Tracking:** Whenever implementing a new feature, bug fix, or refactor, append an entry under the `## [Unreleased]` section.
 2. **Standardized Subsections:** Group entries strictly under these categories:
@@ -44,9 +57,9 @@ All modifications and version increments must be tracked in [docs/CHANGELOG.md](
 
 ---
 
-## 4. Version Control & Git Commit Rules
+## 5. Version Control & Git Commit Rules
 
-### 4.1 Commit Message Standards (Conventional Commits)
+### 5.1 Commit Message Standards (Conventional Commits)
 All commit messages must follow the format: `<type>(<scope>): <short description>`
 
 Allowed types:
@@ -57,59 +70,18 @@ Allowed types:
 - `docs`: Documentation only changes (e.g., `docs(ui): add layout wireframes for leaderboard podium`)
 - `chore`: Build process, dependency updates, or toolchain changes (e.g., `chore(deps): bump compose bom to 2026.02.01`)
 
-### 4.2 Semantic Versioning (SemVer 2.0.0)
+### 5.2 Semantic Versioning (SemVer 2.0.0)
 Version numbers follow `MAJOR.MINOR.PATCH`:
 - **MAJOR (`+1.0.0`):** Incompatible API changes, breaking database migrations without fallback, or complete architectural shifts.
 - **MINOR (`+0.1.0`):** Backward-compatible new features, new activities, new endpoints, or UI additions.
 - **PATCH (`+0.0.1`):** Backward-compatible bug fixes, performance optimizations, or documentation updates.
 
-### 4.3 Android App Version Synchronization
+### 5.3 Android App Version Synchronization
 When releasing a new version:
-- Update `versionName = "X.Y.Z"` in [android/StepCount/app/build.gradle.kts](file:///c:/Users/kimushzyyy/Documents/SCHOOL%20PROJECTS%203.2/StepCount/android/StepCount/app/build.gradle.kts) to match the SemVer tag in `docs/CHANGELOG.md`.
+- Update `versionName = "X.Y.Z"` in [android/StepCount/app/build.gradle.kts](file:///c:/Users/kimushzyyy/Documents/SCHOOL%20PROJECTS%203.2/StepCount/android/StepCount/app/build.gradle.kts) to match the SemVer tag in `CHANGELOG.md`.
 - Increment `versionCode` by `+1` for every release build.
 
-### 4.4 Atomic Commits & Pre-Commit Gates
+### 5.4 Atomic Commits & Pre-Commit Gates
 - **Atomic Principle:** Each commit must encapsulate a single logical unit of work. Never bundle unrelated changes.
 - **Pre-Commit Verification:** Never commit changes if `./gradlew test`, `./gradlew lint`, `pytest`, `ruff check .`, or `mypy app` report any failures.
 - **Zero Secrets:** Never commit `.env`, `google-services.json`, `serviceAccountKey.json`, or private credentials.
-
----
-
-## 5. Branching & Tagging Strategy
-
-### 5.1 Branching Model (Feature-Branch Workflow)
-- **`main` Branch:**
-  - Production-ready branch. Must always compile, pass all unit tests, and maintain zero linting errors.
-  - Never commit untested code directly to `main`.
-- **Feature Branches (`feature/<topic>`):**
-  - Used for developing individual features or screens (e.g., `feature/android-auth-screen`, `feature/fastapi-step-routes`).
-- **Bugfix Branches (`fix/<issue>`):**
-  - Used for resolving bugs or crash issues (e.g., `fix/sensor-listener-leak`, `fix/token-expiry-redirect`).
-- **Refactoring Branches (`refactor/<module>`):**
-  - Used for architectural cleanup or structural migrations (e.g., `refactor/room-dao-flows`).
-- **Documentation Branches (`docs/<topic>`):**
-  - Used for updating specifications, guides, or diagrams (e.g., `docs/ui-wireframes`).
-
-### 5.2 Branch Lifecycle Workflow
-1. **Branch Out:** `git checkout -b feature/<name>` from the latest `main`.
-2. **Develop & Commit:** Write clean, modular code with atomic conventional commits.
-3. **Verify:** Execute local tests (`./gradlew test`, `pytest`, `ruff check .`, `mypy app`).
-4. **Merge to Main:** Switch to `main` and merge the verified branch:
-   ```bash
-   git checkout main
-   git merge feature/<name>
-   git branch -d feature/<name>
-   ```
-
-### 5.3 Git Release Tagging Protocol
-- Every release recorded in `docs/CHANGELOG.md` must have a corresponding annotated Git tag on `main`.
-- Tag format: `v<MAJOR>.<MINOR>.<PATCH>` (e.g., `v0.1.0`, `v0.2.0`, `v1.0.0`).
-- Create annotated tag:
-  ```bash
-  git tag -a v0.1.0 -m "Release v0.1.0: Documentation, UI design system, and icon assets"
-  ```
-- Push branches and tags to remote:
-  ```bash
-  git push origin main
-  git push origin --tags
-  ```
