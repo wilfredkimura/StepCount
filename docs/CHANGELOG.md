@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Background Synchronization:** AndroidX WorkManager `StepSyncWorker` with network constraints and automatic retries.
 - **Automated Unit Testing & Linting:** 100% test pass rate across DAOs, repositories, and ViewModels with 0 Android Lint errors.
 
+### Fixed
+- **Firebase Initialization Crash:** Added defensive initialization and fallback in `FirebaseAuthService` preventing startup crashes when `google-services.json` is not yet configured, allowing seamless offline and Guest Mode operation.
+
 ---
 
 ## [0.1.0] - 2026-08-10
