@@ -10,14 +10,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.stepcount.core.theme.StepCountTheme
 import com.example.stepcount.presentation.navigation.AppNavGraph
+import com.example.stepcount.worker.StepSyncWorker
 
 /**
- * Main Activity hosting the Jetpack Compose navigation graph and theme.
+ * Main Activity hosting the navigation graph, theme, and background sync worker initialization.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Enqueue periodic background sync whenever online
+        StepSyncWorker.enqueuePeriodicSync(applicationContext)
+
         setContent {
             StepCountTheme {
                 Surface(

@@ -25,7 +25,7 @@ data class DailyStepRecord(
      * Estimated walking distance in kilometers.
      */
     val distanceKm: Double
-        get() = (steps * Constants.AVERIDE_METERS_SAFE) / 1000.0
+        get() = (steps * Constants.AVERAGE_STRIDE_METERS) / 1000.0
 
     /**
      * Formatted distance string (e.g. "6.2 km").
@@ -51,6 +51,3 @@ data class DailyStepRecord(
     val isGoalMet: Boolean
         get() = steps >= goal
 }
-
-// Stride length constant fallback
-private const val AVERIDE_METERS_SAFE = 0.762

@@ -78,22 +78,26 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Tab Switcher (Login vs Register)
-                TabRow(
-                    selectedTabIndex = if (state.isLoginTab) 0 else 1,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                Surface(
                     shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Tab(
-                        selected = state.isLoginTab,
-                        onClick = { viewModel.onTabChanged(true) },
-                        text = { Text("Log In", fontWeight = FontWeight.SemiBold) }
-                    )
-                    Tab(
-                        selected = !state.isLoginTab,
-                        onClick = { viewModel.onTabChanged(false) },
-                        text = { Text("Register", fontWeight = FontWeight.SemiBold) }
-                    )
+                    TabRow(
+                        selectedTabIndex = if (state.isLoginTab) 0 else 1,
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent
+                    ) {
+                        Tab(
+                            selected = state.isLoginTab,
+                            onClick = { viewModel.onTabChanged(true) },
+                            text = { Text("Log In", fontWeight = FontWeight.SemiBold) }
+                        )
+                        Tab(
+                            selected = !state.isLoginTab,
+                            onClick = { viewModel.onTabChanged(false) },
+                            text = { Text("Register", fontWeight = FontWeight.SemiBold) }
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
 

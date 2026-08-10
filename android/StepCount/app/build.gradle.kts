@@ -63,6 +63,12 @@ dependencies {
     // Background WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 
+    // Firebase Authentication & Play Services
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.play.services.auth)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.1")
+
     // Unit Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

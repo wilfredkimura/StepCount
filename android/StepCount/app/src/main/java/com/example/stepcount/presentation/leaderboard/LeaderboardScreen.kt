@@ -83,30 +83,35 @@ fun LeaderboardScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Period Tab Row
-            TabRow(
-                selectedTabIndex = when (state.activePeriod) {
-                    "today" -> 0
-                    "week" -> 1
-                    else -> 2
-                },
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(12.dp)
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Tab(
-                    selected = state.activePeriod == "today",
-                    onClick = { viewModel.switchPeriod("today") },
-                    text = { Text("Today", fontWeight = FontWeight.SemiBold) }
-                )
-                Tab(
-                    selected = state.activePeriod == "week",
-                    onClick = { viewModel.switchPeriod("week") },
-                    text = { Text("This Week", fontWeight = FontWeight.SemiBold) }
-                )
-                Tab(
-                    selected = state.activePeriod == "all_time",
-                    onClick = { viewModel.switchPeriod("all_time") },
-                    text = { Text("All Time", fontWeight = FontWeight.SemiBold) }
-                )
+                TabRow(
+                    selectedTabIndex = when (state.activePeriod) {
+                        "today" -> 0
+                        "week" -> 1
+                        else -> 2
+                    },
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent
+                ) {
+                    Tab(
+                        selected = state.activePeriod == "today",
+                        onClick = { viewModel.switchPeriod("today") },
+                        text = { Text("Today", fontWeight = FontWeight.SemiBold) }
+                    )
+                    Tab(
+                        selected = state.activePeriod == "week",
+                        onClick = { viewModel.switchPeriod("week") },
+                        text = { Text("This Week", fontWeight = FontWeight.SemiBold) }
+                    )
+                    Tab(
+                        selected = state.activePeriod == "all_time",
+                        onClick = { viewModel.switchPeriod("all_time") },
+                        text = { Text("All Time", fontWeight = FontWeight.SemiBold) }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
