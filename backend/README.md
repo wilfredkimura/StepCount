@@ -4,9 +4,16 @@ Asynchronous REST API for the **StepCount** Android application built with **Fas
 
 ---
 
-## 1. Local Development Setup (with `venv`)
+## 1. Firebase Authentication Setup
 
-### 1.1 Create and Activate Virtual Environment
+For a complete walkthrough on configuring Firebase Console, downloading `google-services.json` for Android, and generating `serviceAccountKey.json` for the backend, see:
+👉 **[Firebase Authentication Integration Tutorial](../docs/firebase_auth_tutorial.md)**
+
+---
+
+## 2. Local Development Setup (with `venv`)
+
+### 2.1 Create and Activate Virtual Environment
 ```powershell
 # Open terminal in the backend directory
 cd backend
@@ -20,12 +27,12 @@ python -m venv venv
 # (If PowerShell script execution is restricted, run: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass)
 ```
 
-### 1.2 Install Dependencies
+### 2.2 Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 1.3 Configure Environment (`.env`)
+### 2.3 Configure Environment (`.env`)
 Create a `.env` file in the `backend/` directory (copy from `.env.example`):
 ```env
 ENVIRONMENT=development
@@ -34,7 +41,12 @@ FIREBASE_CREDENTIALS_PATH=serviceAccountKey.json
 CORS_ORIGINS=["*"]
 ```
 
-### 1.4 Run the Backend Server
+### 2.4 Verify NeonDB Database Connection
+```powershell
+.\venv\Scripts\python.exe test_neondb.py
+```
+
+### 2.5 Run the Backend Server
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
@@ -44,7 +56,7 @@ uvicorn app.main:app --reload --port 8000
 
 ---
 
-## 2. Deploying on Render (Free Tier)
+## 3. Deploying on Render (Free Tier)
 
 Render natively runs FastAPI applications without Docker on its free tier:
 
@@ -65,7 +77,7 @@ Render natively runs FastAPI applications without Docker on its free tier:
 
 ---
 
-## 3. Running Automated Tests
+## 4. Running Automated Tests
 
 ```bash
 # Run pytest with test coverage report
