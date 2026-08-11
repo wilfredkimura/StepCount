@@ -18,8 +18,8 @@ router = APIRouter()
 
 @router.get("", response_model=List[LeaderboardItemDto], summary="Get competitive leaderboard rankings")
 async def get_leaderboard(
-    period: str = Query(default="today", regex="^(today|week|all_time)$", description="Ranking period"),
-    type: str = Query(default="steps", regex="^(steps|goal)$", description="Ranking criteria"),
+    period: str = Query(default="today", pattern="^(today|week|all_time)$", description="Ranking period"),
+    type: str = Query(default="steps", pattern="^(steps|goal)$", description="Ranking criteria"),
     limit: int = Query(default=50, ge=1, le=100, description="Max rankings returned"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -37,8 +37,8 @@ async def get_leaderboard(
 
 @router.get("/me", response_model=UserRankDto, summary="Get current user's personal rank")
 async def get_my_rank(
-    period: str = Query(default="today", regex="^(today|week|all_time)$", description="Ranking period"),
-    type: str = Query(default="steps", regex="^(steps|goal)$", description="Ranking criteria"),
+    period: str = Query(default="today", pattern="^(today|week|all_time)$", description="Ranking period"),
+    type: str = Query(default="steps", pattern="^(steps|goal)$", description="Ranking criteria"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> UserRankDto:

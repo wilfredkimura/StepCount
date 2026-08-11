@@ -25,9 +25,15 @@ async def firebase_login(
     Verifies the Firebase ID token in the Authorization header.
     Creates or updates the user profile in NeonDB, then returns the user profile.
     """
-    # If client passed updated name, update it in the database record
+    updated = False
     if payload.name and payload.name != current_user.name:
         current_user.name = payload.name
+        updated = True
+    if payload.email and str(payload.email) != current_user.email:
+        current_user.email = str(payload.email)
+        updated = True
+
+    if updated:
         await db.flush()
         await db.refresh(current_user)
 

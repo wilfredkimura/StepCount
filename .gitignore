@@ -23,10 +23,14 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 .env
 serviceAccountKey*.json
 *.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/
 
 # OS / Editor
 Thumbs.db

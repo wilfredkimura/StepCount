@@ -31,7 +31,7 @@ async def get_current_user(
 
     id_token = auth_header.credentials
     
-    # 1. Verify token with Firebase Admin
+    # 1. Verify token with Firebase Admin SDK
     claims = FirebaseService.verify_token(id_token)
     user_id = claims.get("uid")
     if not user_id:
@@ -45,7 +45,7 @@ async def get_current_user(
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
 
-    # 3. Auto-provision or update user in database
+    # 3. Auto-provision user in database if not existing
     if user is None:
         user = User(
             id=user_id,
@@ -56,17 +56,5 @@ async def get_current_user(
         db.add(user)
         await db.flush()
         await db.refresh(user)
-    else:
-        # Update name or email if updated in Firebase
-        updated = False
-        if name and name != "StepCount User" and user.name != name:
-            user.name = name
-            updated = True
-        if email and user.email != email:
-            user.email = email
-            updated = True
-        if updated:
-            await db.flush()
-            await db.refresh(user)
 
     return user

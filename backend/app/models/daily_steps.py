@@ -5,7 +5,7 @@ Stores historical daily step counts and active step goals for each user in NeonD
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 class DailySteps(Base):
     __tablename__ = "daily_steps"
 
-    # Unique record identifier
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    # Unique record identifier (autoincrements in PostgreSQL and SQLite)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     
     # Foreign key referencing the user who logged these steps
     user_id: Mapped[str] = mapped_column(
@@ -32,7 +32,7 @@ class DailySteps(Base):
     date: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
     
     # Total recorded steps for that day
-    steps: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
+    steps: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     
     # Goal that was active on that specific day (for historical accuracy)
     goal: Mapped[int] = mapped_column(Integer, default=8000, nullable=False)
