@@ -1,8 +1,11 @@
-# Android
+# Android & IDE
 *.iml
 .gradle
 local.properties
 .idea/
+**/.idea/
+*.ipr
+*.iws
 .DS_Store
 build/
 captures/
