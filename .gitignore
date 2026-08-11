@@ -1,13 +1,18 @@
-# Android
+# Android & IDE
 *.iml
 .gradle
 local.properties
 .idea/
+**/.idea/
+*.ipr
+*.iws
 .DS_Store
 build/
 captures/
 .externalNativeBuild
 .cxx
+*.apk
+StepCount.apk
 
 # Python
 __pycache__/
