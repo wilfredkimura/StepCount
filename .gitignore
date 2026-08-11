@@ -8,6 +8,8 @@ build/
 captures/
 .externalNativeBuild
 .cxx
+*.apk
+StepCount.apk
 
 # Python
 __pycache__/
