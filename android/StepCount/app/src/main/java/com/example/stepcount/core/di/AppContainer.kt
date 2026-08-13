@@ -13,7 +13,7 @@ import com.example.stepcount.domain.usecase.*
  */
 class AppContainer(context: Context) {
 
-    private val database = StepCountDatabase.getDatabase(context)
+    val database = StepCountDatabase.getDatabase(context)
 
     val authService = FirebaseAuthService(context)
     val apiService = RetrofitClient.createApiService(authService)
@@ -22,15 +22,18 @@ class AppContainer(context: Context) {
         authService = authService,
         apiService = apiService,
         userProfileDao = database.userProfileDao(),
-        dailyStepsDao = database.dailyStepsDao()
+        dailyStepsDao = database.dailyStepsDao(),
+        context = context
     )
 
     val stepRepository: StepRepository = StepRepositoryImpl(
         authService = authService,
         apiService = apiService,
         dailyStepsDao = database.dailyStepsDao(),
-        userProfileDao = database.userProfileDao()
+        userProfileDao = database.userProfileDao(),
+        context = context
     )
+
 
     val leaderboardRepository: LeaderboardRepository = LeaderboardRepositoryImpl(
         authService = authService,
