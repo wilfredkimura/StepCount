@@ -1,8 +1,29 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+// Load configuration from root local.properties if present
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
+}
+
+// Retrieve custom backend URL from local.properties (backend.url or BACKEND_URL)
+// Defaults to local emulator URL (10.0.2.2 points to host PC localhost:8000)
+val rawBackendUrl: String = localProperties.getProperty("backend.url")
+    ?: localProperties.getProperty("BACKEND_URL")
+    ?: "http://10.0.2.2:8000/api/"
+
+val configuredBackendUrl: String = if (rawBackendUrl.endsWith("/")) rawBackendUrl else "$rawBackendUrl/"
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
+
 
 android {
     namespace = "com.example.stepcount"
@@ -16,6 +37,9 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Expose the configured backend URL from local.properties to code via BuildConfig
+        buildConfigField("String", "BASE_URL", "\"$configuredBackendUrl\"")
     }
 
     buildTypes {
@@ -33,6 +57,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

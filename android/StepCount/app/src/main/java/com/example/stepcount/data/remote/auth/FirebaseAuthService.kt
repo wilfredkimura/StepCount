@@ -26,11 +26,10 @@ class FirebaseAuthService(
 
     private val firebaseAuth: FirebaseAuth? = customFirebaseAuth ?: run {
         try {
-            if (FirebaseApp.getApps(context).isEmpty()) {
+            val app = if (FirebaseApp.getApps(context).isEmpty()) {
                 try {
                     FirebaseApp.initializeApp(context)
                 } catch (e: Exception) {
-                    // Fallback to explicit options matching google-services.json
                     val options = FirebaseOptions.Builder()
                         .setApplicationId("1:927399598438:android:69965c728fc50e19d9d0a7")
                         .setApiKey("AIzaSyCf0uzRU95GV52rHZZEa5j50PN4s5gLN44")
@@ -38,10 +37,16 @@ class FirebaseAuthService(
                         .build()
                     FirebaseApp.initializeApp(context, options)
                 }
+            } else {
+                FirebaseApp.getInstance()
             }
-            FirebaseAuth.getInstance()
+            if (app != null) {
+                FirebaseAuth.getInstance(app)
+            } else {
+                FirebaseAuth.getInstance()
+            }
         } catch (e: Exception) {
-            // App runs in offline/guest mode if Firebase is completely unreachable
+            android.util.Log.e("FirebaseAuthService", "Firebase initialization error: ${e.message}", e)
             null
         }
     }
@@ -115,10 +120,22 @@ class FirebaseAuthService(
      */
     suspend fun register(email: String, password: String, name: String = ""): String {
         val auth = firebaseAuth ?: throw IllegalStateException(
-            "Firebase is not configured yet. Please use 'Continue as Guest' or add google-services.json."
+            "Firebase is not configured yet. Please check your internet connection or try again."
         )
         disableGuestMode()
-        val result = auth.createUserWithEmailAndPassword(email, password).await()
+        val result = try {
+            auth.createUserWithEmailAndPassword(email, password).await()
+        } catch (e: com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+            throw IllegalArgumentException("An account already exists with email $email. Please log in instead.")
+        } catch (e: com.google.firebase.auth.FirebaseAuthWeakPasswordException) {
+            throw IllegalArgumentException("Password is too weak. Please use at least 6 characters.")
+        } catch (e: com.google.firebase.auth.FirebaseAuthInvalidCredentialsException) {
+            throw IllegalArgumentException("Invalid email format. Please check your email address.")
+        } catch (e: com.google.firebase.FirebaseNetworkException) {
+            throw java.io.IOException("Network error connecting to Firebase. Please check your internet connection.")
+        } catch (e: Exception) {
+            throw e
+        }
         val user = result.user ?: throw IllegalStateException("Failed to get user ID after registration")
 
         // Set user's display name so token claims contain the name immediately
@@ -129,7 +146,7 @@ class FirebaseAuthService(
                     .build()
                 user.updateProfile(profileUpdates).await()
             } catch (e: Exception) {
-                // Ignore non-fatal display name update error during offline registration
+                // Ignore non-fatal display name update error during registration
             }
         }
 
@@ -141,10 +158,20 @@ class FirebaseAuthService(
      */
     suspend fun login(email: String, password: String): String {
         val auth = firebaseAuth ?: throw IllegalStateException(
-            "Firebase is not configured yet. Please use 'Continue as Guest' or add google-services.json."
+            "Firebase is not configured yet. Please check your internet connection or try again."
         )
         disableGuestMode()
-        val result = auth.signInWithEmailAndPassword(email, password).await()
+        val result = try {
+            auth.signInWithEmailAndPassword(email, password).await()
+        } catch (e: com.google.firebase.auth.FirebaseAuthInvalidUserException) {
+            throw IllegalArgumentException("No account found with this email. Please register first.")
+        } catch (e: com.google.firebase.auth.FirebaseAuthInvalidCredentialsException) {
+            throw IllegalArgumentException("Invalid email or password. Please check your credentials.")
+        } catch (e: com.google.firebase.FirebaseNetworkException) {
+            throw java.io.IOException("Network error connecting to Firebase. Please check your internet connection.")
+        } catch (e: Exception) {
+            throw e
+        }
         return result.user?.uid ?: throw IllegalStateException("Failed to get user ID after login")
     }
 
