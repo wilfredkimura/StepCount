@@ -25,9 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend Console Identification & Logging:** Added structured ASCII logs in FastAPI for connected users (`[USER CONNECTED]`), account creation (`[NEW USER CREATED]`), authentication sync (`[AUTH SYNC]`), step upload (`[DATA SYNC]`), and quote requests (`[QUOTE REQUEST]`).
 - **Complete Firebase Auth Pipeline:** Implemented `displayName` profile updates on registration in `FirebaseAuthService`, programmatic `FirebaseOptions` fallback matching `google-services.json`, and Room database user profile synchronization on login/register.
 - **Graceful Client Sync & Toast Notifications:** Added detailed network exception classification (`UnknownHostException`, `ConnectException`, `SocketTimeoutException`, HTTP 5xx) with user-friendly Toast alerts in `SettingsScreen`.
-
+- **Today's Steps Home Screen Widget:** Added Android AppWidget displaying today's live steps, progress bar, calories, and daily goal percentage with Room Database SSOT integration, Material Design 3 dark athletic theme, and real-time updates.
 
 ---
+
 
 ## [1.0.0] - 2026-08-11
 
