@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.example.stepcount.core.util.Constants
 import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
@@ -25,11 +27,21 @@ class FirebaseAuthService(
     private val firebaseAuth: FirebaseAuth? = customFirebaseAuth ?: run {
         try {
             if (FirebaseApp.getApps(context).isEmpty()) {
-                FirebaseApp.initializeApp(context)
+                try {
+                    FirebaseApp.initializeApp(context)
+                } catch (e: Exception) {
+                    // Fallback to explicit options matching google-services.json
+                    val options = FirebaseOptions.Builder()
+                        .setApplicationId("1:927399598438:android:69965c728fc50e19d9d0a7")
+                        .setApiKey("AIzaSyCf0uzRU95GV52rHZZEa5j50PN4s5gLN44")
+                        .setProjectId("stepcount-5c9f9")
+                        .build()
+                    FirebaseApp.initializeApp(context, options)
+                }
             }
             FirebaseAuth.getInstance()
         } catch (e: Exception) {
-            // FirebaseApp not configured with google-services.json yet; app runs in offline/guest mode
+            // App runs in offline/guest mode if Firebase is completely unreachable
             null
         }
     }
@@ -99,15 +111,29 @@ class FirebaseAuthService(
     }
 
     /**
-     * Registers a new account with email and password in Firebase Auth.
+     * Registers a new account with email, password, and display name in Firebase Auth.
      */
-    suspend fun register(email: String, password: String): String {
+    suspend fun register(email: String, password: String, name: String = ""): String {
         val auth = firebaseAuth ?: throw IllegalStateException(
             "Firebase is not configured yet. Please use 'Continue as Guest' or add google-services.json."
         )
         disableGuestMode()
         val result = auth.createUserWithEmailAndPassword(email, password).await()
-        return result.user?.uid ?: throw IllegalStateException("Failed to get user ID after registration")
+        val user = result.user ?: throw IllegalStateException("Failed to get user ID after registration")
+
+        // Set user's display name so token claims contain the name immediately
+        if (name.isNotBlank()) {
+            try {
+                val profileUpdates = UserProfileChangeRequest.Builder()
+                    .setDisplayName(name)
+                    .build()
+                user.updateProfile(profileUpdates).await()
+            } catch (e: Exception) {
+                // Ignore non-fatal display name update error during offline registration
+            }
+        }
+
+        return user.uid
     }
 
     /**
@@ -134,3 +160,4 @@ class FirebaseAuthService(
         }
     }
 }
+
