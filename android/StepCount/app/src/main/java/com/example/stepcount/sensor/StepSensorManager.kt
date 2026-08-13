@@ -55,10 +55,12 @@ class StepSensorManager(
         isListening = true
 
         _liveSteps.value = initialTodaySteps
+        android.util.Log.d("StepSensorManager", "startListening: Hardware TYPE_STEP_COUNTER present=${stepCounterSensor != null}, Accelerometer present=${accelerometerSensor != null}")
 
         if (stepCounterSensor != null) {
             _isFallbackActive.value = false
-            sensorManager.registerListener(this, stepCounterSensor, SensorManager.SENSOR_DELAY_UI)
+            val registered = sensorManager.registerListener(this, stepCounterSensor, SensorManager.SENSOR_DELAY_UI)
+            android.util.Log.i("StepSensorManager", "Registered TYPE_STEP_COUNTER sensor (success=$registered)")
         } else if (accelerometerSensor != null) {
             // Automatic fallback to 3-axis accelerometer peak detector
             _isFallbackActive.value = true
@@ -66,8 +68,10 @@ class StepSensorManager(
                 val newCount = _liveSteps.value + 1
                 _liveSteps.value = newCount
                 onStepCountUpdated(newCount)
+                android.util.Log.d("StepSensorManager", "Accelerometer step detected! Count: $newCount")
             }
-            sensorManager.registerListener(accelerometerDetector, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME)
+            val registered = sensorManager.registerListener(accelerometerDetector, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME)
+            android.util.Log.i("StepSensorManager", "Registered Accelerometer fallback sensor (success=$registered)")
         }
     }
 
@@ -77,6 +81,7 @@ class StepSensorManager(
     fun stopListening() {
         if (!isListening) return
         isListening = false
+        android.util.Log.d("StepSensorManager", "stopListening: Unregistering sensor listeners.")
         sensorManager.unregisterListener(this)
         accelerometerDetector?.let {
             sensorManager.unregisterListener(it)
@@ -99,15 +104,18 @@ class StepSensorManager(
                 .putString(Constants.KEY_LAST_RECORDED_DATE, today)
                 .putLong(Constants.KEY_DAILY_BASELINE, baseline)
                 .apply()
+            android.util.Log.i("StepSensorManager", "New daily baseline initialized: $baseline for date $today")
         }
 
         val calculatedTodaySteps = (totalHardwareSteps - baseline).coerceAtLeast(0L)
         _liveSteps.value = calculatedTodaySteps
+        android.util.Log.d("StepSensorManager", "onSensorChanged: raw=$totalHardwareSteps, baseline=$baseline, calculatedToday=$calculatedTodaySteps")
 
         scope.launch {
             onStepCountUpdated(calculatedTodaySteps)
         }
     }
+
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
         // No action needed for accuracy change

@@ -13,6 +13,7 @@ captures/
 .cxx
 *.apk
 StepCount.apk
+google-services.json
 
 # Python
 __pycache__/
@@ -22,8 +23,14 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 .env
+serviceAccountKey*.json
+*.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/
 
 # OS / Editor
 Thumbs.db

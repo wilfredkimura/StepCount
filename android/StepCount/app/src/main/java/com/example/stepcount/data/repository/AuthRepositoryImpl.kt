@@ -40,8 +40,8 @@ class AuthRepositoryImpl(
 
     override suspend fun register(email: String, password: String, name: String): Resource<UserProfile> = withContext(Dispatchers.IO) {
         try {
-            val userId = authService.register(email, password)
-            val profileEntity = UserProfileEntity(
+            val userId = authService.register(email, password, name)
+            var profileEntity = UserProfileEntity(
                 userId = userId,
                 email = email,
                 name = name
@@ -49,14 +49,26 @@ class AuthRepositoryImpl(
             // Save locally in Room first
             userProfileDao.upsertUserProfile(profileEntity)
 
-            // Try synchronizing with backend server if online
+            // Synchronize with backend server if online and store remote profile attributes
             try {
-                apiService.syncUserWithBackend(FirebaseLoginRequestDto(email, name))
+                val response = apiService.syncUserWithBackend(FirebaseLoginRequestDto(email, name))
+                if (response.isSuccessful) {
+                    val remoteProfile = response.body()
+                    if (remoteProfile != null) {
+                        profileEntity = UserProfileEntity(
+                            userId = if (remoteProfile.userId.isNotBlank()) remoteProfile.userId else userId,
+                            email = if (remoteProfile.email.isNotBlank()) remoteProfile.email else email,
+                            name = if (remoteProfile.name.isNotBlank()) remoteProfile.name else name,
+                            dailyGoal = remoteProfile.dailyGoal
+                        )
+                        userProfileDao.upsertUserProfile(profileEntity)
+                    }
+                }
             } catch (e: Exception) {
                 // Offline fallback: continue using local profile
             }
 
-            Resource.Success(UserProfile(userId, email, name, profileEntity.dailyGoal))
+            Resource.Success(UserProfile(profileEntity.userId, profileEntity.email, profileEntity.name, profileEntity.dailyGoal))
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Registration failed")
         }
@@ -70,7 +82,7 @@ class AuthRepositoryImpl(
             val name = localProfile?.name ?: email.substringBefore("@")
             val goal = localProfile?.dailyGoal ?: 8000
 
-            val profileEntity = UserProfileEntity(
+            var profileEntity = UserProfileEntity(
                 userId = userId,
                 email = email,
                 name = name,
@@ -78,17 +90,31 @@ class AuthRepositoryImpl(
             )
             userProfileDao.upsertUserProfile(profileEntity)
 
+            // Synchronize with backend server and update local Room database
             try {
-                apiService.syncUserWithBackend(FirebaseLoginRequestDto(email, name))
+                val response = apiService.syncUserWithBackend(FirebaseLoginRequestDto(email, name))
+                if (response.isSuccessful) {
+                    val remoteProfile = response.body()
+                    if (remoteProfile != null) {
+                        profileEntity = UserProfileEntity(
+                            userId = if (remoteProfile.userId.isNotBlank()) remoteProfile.userId else userId,
+                            email = if (remoteProfile.email.isNotBlank()) remoteProfile.email else email,
+                            name = if (remoteProfile.name.isNotBlank()) remoteProfile.name else name,
+                            dailyGoal = remoteProfile.dailyGoal
+                        )
+                        userProfileDao.upsertUserProfile(profileEntity)
+                    }
+                }
             } catch (e: Exception) {
                 // Continue offline
             }
 
-            Resource.Success(UserProfile(userId, email, name, goal))
+            Resource.Success(UserProfile(profileEntity.userId, profileEntity.email, profileEntity.name, profileEntity.dailyGoal))
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Login failed")
         }
     }
+
 
     override suspend fun continueAsGuest(): UserProfile = withContext(Dispatchers.IO) {
         val guestId = authService.enableGuestMode()

@@ -31,7 +31,7 @@ StepCount is a modern fitness tracking application designed to monitor daily wal
 | :--- | :--- |
 | **Android Client** | Kotlin, Jetpack Compose, Material Design 3, Room Database, Retrofit, OkHttp, Coroutines, Flow |
 | **Backend API** | Python 3, FastAPI (Async), SQLAlchemy 2.0 / asyncpg, Pydantic v2, Alembic |
-| **Database** | PostgreSQL (Primary remote store), SQLite / Room (Local client store) |
+| **Database** | PostgreSQL (Primary remote store on NeonDB), SQLite / Room (Local client store) |
 | **Authentication** | Firebase Authentication (Client SDK + Firebase Admin SDK) |
 | **Testing & Quality** | JUnit, Turbine, MockK, Android Lint, Pytest, Ruff, Mypy |
 
@@ -39,8 +39,10 @@ StepCount is a modern fitness tracking application designed to monitor daily wal
 
 ## Project Documentation
 
-Detailed architectural guidelines, UI layouts, and quality standards are maintained in the `docs/` directory:
+Detailed architectural guidelines, setup tutorials, UI layouts, and quality standards:
 
+- [Firebase Auth Integration Tutorial (docs/firebase_auth_tutorial.md)](docs/firebase_auth_tutorial.md) – Step-by-step guide for Firebase console, Android config, and FastAPI token validation.
+- [FastAPI Backend Guide (backend/README.md)](backend/README.md) – Local venv setup, NeonDB testing, and Render deployment.
 - [Technical Specifications (docs/docs.md)](docs/docs.md) – Complete architecture, entity models, endpoints, and requirements.
 - [UI & Screen Layouts (docs/ui.md)](docs/ui.md) – Material Design 3 specifications, component hierarchy, and screen wireframes.
 - [Engineering Leash (docs/leash.md)](docs/leash.md) – Mandatory coding rules, clean architecture patterns, testing thresholds, and pre-commit checks.

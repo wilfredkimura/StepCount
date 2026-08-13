@@ -28,6 +28,7 @@ object Constants {
     const val KEY_STEP_UNITS = "key_step_units"
     const val KEY_GUEST_MODE = "key_guest_mode"
 
-    // Backend Base URL (FastAPI)
-    const val BACKEND_BASE_URL = "https://api.stepcount.app/api/"
+    // Backend Base URL (delegates to AppConfig for easy local vs Render switching)
+    val BACKEND_BASE_URL: String
+        get() = AppConfig.BASE_URL
 }

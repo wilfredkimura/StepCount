@@ -1,0 +1,12 @@
+## StepCount Local Configuration Template
+# Copy this file to 'local.properties' and customize with your local paths and server URL.
+# 'local.properties' is ignored by git and will never be committed.
+
+# Path to your Android SDK
+# sdk.dir=C\:\\Users\\<USERNAME>\\AppData\\Local\\Android\\Sdk
+
+# StepCount Backend Base URL configuration:
+# 1. Local Emulator: http://10.0.2.2:8000/api/
+# 2. Physical Phone over Wi-Fi: http://<YOUR_PC_IP>:8000/api/ (e.g. http://192.168.1.50:8000/api/)
+# 3. Hosted Cloud backend: https://<YOUR_HOSTED_APP>.onrender.com/api/
+backend.url=http://10.0.2.2:8000/api/
