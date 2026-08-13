@@ -137,10 +137,23 @@ class StepRepositoryImpl(
                 if (response.isSuccessful) {
                     dailyStepsDao.markAsSynced(record.id)
                     syncedCount++
+                } else if (response.code() in 500..599) {
+                    return@withContext Resource.Error("Server is temporarily down (HTTP ${response.code()}). Please try again later.")
+                } else if (response.code() == 401) {
+                    return@withContext Resource.Error("Authentication session expired. Please sign in again.")
+                } else {
+                    return@withContext Resource.Error("Sync failed: ${response.message()} (Code: ${response.code()})")
                 }
+            } catch (e: java.net.UnknownHostException) {
+                return@withContext Resource.Error("Cannot reach server. Please check your internet connection or verify the server is running.")
+            } catch (e: java.net.ConnectException) {
+                return@withContext Resource.Error("Cannot connect to backend server. Make sure the server is online or check your network.")
+            } catch (e: java.net.SocketTimeoutException) {
+                return@withContext Resource.Error("Connection timed out. Please check your internet connection and try again.")
+            } catch (e: java.io.IOException) {
+                return@withContext Resource.Error("Network error during sync. Please check your internet connection.")
             } catch (e: Exception) {
-                // Break on connection loss
-                break
+                return@withContext Resource.Error("Sync error: ${e.localizedMessage ?: "Unknown error"}")
             }
         }
         Resource.Success(syncedCount)
