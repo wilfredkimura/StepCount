@@ -1,8 +1,4 @@
-"""
-Daily Steps Business Service.
-Handles database operations for logging, updating, retrieving, and deleting daily step records.
-"""
-
+import logging
 from datetime import date
 from typing import List, Optional
 from sqlalchemy import delete, select
@@ -12,6 +8,8 @@ from app.core.exceptions import ResourceNotFoundException
 from app.models.daily_steps import DailySteps
 from app.models.user import User
 from app.schemas.steps import StepResponseDto, StepUploadRequestDto
+
+logger = logging.getLogger("stepcount.steps")
 
 
 class StepService:
@@ -51,6 +49,8 @@ class StepService:
         await db.flush()
         await db.refresh(record)
 
+        logger.info(f"[DATA SYNC] User '{user.email}' ({user.id}) synced steps: {record.steps} for date {record.date} (Goal: {record.goal})")
+
         return StepResponseDto(
             id=record.id,
             user_id=record.user_id,
@@ -58,6 +58,7 @@ class StepService:
             steps=record.steps,
             goal=record.goal
         )
+
 
     @staticmethod
     async def get_today_steps(
