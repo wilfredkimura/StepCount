@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   5. `GET /api/motivation` (Quotable API client with resilient curated local fallback).
 - **Render Free Tier Deployment Guide:** Clean documentation in [backend/README.md](file:///c:/Users/kimushzyyy/Documents/SCHOOL%20PROJECTS%203.2/StepCount/backend/README.md) for 1-click cloud deployment without Docker.
 - **Automated Backend Pytest Suite:** 100% test pass rate with **87% overall test coverage** across all routes and services.
+- **Dynamic Backend URL via `local.properties`:** Added automated Gradle build property parsing for `backend.url` / `BACKEND_URL` in [build.gradle.kts](file:///c:/Users/kimushzyyy/Documents/SCHOOL%20PROJECTS%203.2/StepCount/android/StepCount/app/build.gradle.kts), exposing `BuildConfig.BASE_URL` with fallback to local emulator URL and customizable `local.properties.example` template.
+- **Backend Console Identification & Logging:** Added structured ASCII logs in FastAPI for connected users (`[USER CONNECTED]`), account creation (`[NEW USER CREATED]`), authentication sync (`[AUTH SYNC]`), step upload (`[DATA SYNC]`), and quote requests (`[QUOTE REQUEST]`).
+- **Complete Firebase Auth Pipeline:** Implemented `displayName` profile updates on registration in `FirebaseAuthService`, programmatic `FirebaseOptions` fallback matching `google-services.json`, and Room database user profile synchronization on login/register.
+- **Graceful Client Sync & Toast Notifications:** Added detailed network exception classification (`UnknownHostException`, `ConnectException`, `SocketTimeoutException`, HTTP 5xx) with user-friendly Toast alerts in `SettingsScreen`.
+
 
 ---
 
