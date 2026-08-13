@@ -3,6 +3,7 @@ Security dependencies and authentication middleware.
 Provides get_current_user dependency for protected FastAPI route handlers.
 """
 
+import logging
 from typing import Optional
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -13,6 +14,8 @@ from app.core.exceptions import UnauthorizedException
 from app.db.session import get_db
 from app.models.user import User
 from app.services.firebase_service import FirebaseService
+
+logger = logging.getLogger("stepcount.auth")
 
 # HTTP Bearer scheme for extracting Authorization header
 http_bearer = HTTPBearer(auto_error=False)
@@ -56,5 +59,9 @@ async def get_current_user(
         db.add(user)
         await db.flush()
         await db.refresh(user)
+        logger.info(f"[NEW USER CREATED] ID: {user.id} | Email: {user.email} | Name: {user.name} | Goal: {user.daily_goal}")
+    else:
+        logger.info(f"[USER CONNECTED] ID: {user.id} | Email: {user.email} | Name: {user.name}")
 
     return user
+

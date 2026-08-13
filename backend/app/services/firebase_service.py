@@ -78,6 +78,15 @@ class FirebaseService:
         if not id_token:
             raise UnauthorizedException("Authorization token is missing.")
 
+        # In development/test mode, allow test tokens for deterministic automated tests
+        if settings.ENVIRONMENT in ["test", "development"] and id_token.startswith("test_token_"):
+            uid = id_token.replace("test_token_", "")
+            return {
+                "uid": uid,
+                "email": f"{uid}@example.com",
+                "name": f"Test User {uid}"
+            }
+
         # Ensure Firebase Admin is initialized
         if not cls._initialized and len(firebase_admin._apps) == 0:
             cls.initialize()
@@ -93,13 +102,6 @@ class FirebaseService:
         except firebase_auth.InvalidIdTokenError as e:
             raise UnauthorizedException(f"Invalid Firebase ID token: {str(e)}")
         except Exception as e:
-            # In development/test mode, check for special test token prefix
-            if settings.ENVIRONMENT in ["test", "development"] and id_token.startswith("test_token_"):
-                uid = id_token.replace("test_token_", "")
-                return {
-                    "uid": uid,
-                    "email": f"{uid}@example.com",
-                    "name": f"Test User {uid}"
-                }
             logger.error(f"Firebase token verification error: {e}")
             raise UnauthorizedException("Failed to authenticate with Firebase token.")
+

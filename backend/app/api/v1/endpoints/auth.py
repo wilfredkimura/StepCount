@@ -3,6 +3,7 @@ Authentication Endpoints.
 Handles Firebase token synchronization and user session events.
 """
 
+import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +12,8 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import FirebaseLoginRequestDto, LogoutResponseDto
 from app.schemas.user import UserProfileDto
+
+logger = logging.getLogger("stepcount.auth")
 
 router = APIRouter()
 
@@ -37,6 +40,8 @@ async def firebase_login(
         await db.flush()
         await db.refresh(current_user)
 
+    logger.info(f"[AUTH SYNC] User '{current_user.email}' ({current_user.id}) synchronized session.")
+
     return UserProfileDto(
         user_id=current_user.id,
         email=current_user.email,
@@ -52,4 +57,6 @@ async def logout(
     """
     Logs out the user and acknowledges session termination.
     """
+    logger.info(f"[USER LOGOUT] User '{current_user.email}' ({current_user.id}) logged out.")
     return LogoutResponseDto(message="User logged out successfully.")
+
