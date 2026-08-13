@@ -6,9 +6,12 @@ import com.example.stepcount.domain.model.Resource
 import com.example.stepcount.domain.repository.AuthRepository
 import com.example.stepcount.domain.repository.StepRepository
 import com.example.stepcount.domain.usecase.SyncPendingStepsUseCase
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -24,6 +27,10 @@ class SettingsViewModel(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
+    // One-shot event channel for UI Toast notifications
+    private val _toastEventChannel = Channel<String>(Channel.BUFFERED)
+    val toastMessageEvent: Flow<String> = _toastEventChannel.receiveAsFlow()
+
     fun toggleDarkMode(enabled: Boolean) {
         _uiState.update { it.copy(isDarkMode = enabled) }
     }
@@ -37,24 +44,37 @@ class SettingsViewModel(
             _uiState.update { it.copy(isSyncingNow = true, syncSuccessMessage = null) }
             when (val result = syncPendingStepsUseCase()) {
                 is Resource.Success -> {
+                    val count = result.data ?: 0
+                    val message = if (count > 0) {
+                        "Successfully synced $count step record(s) with the server."
+                    } else {
+                        "All step records are already up to date."
+                    }
                     _uiState.update {
                         it.copy(
                             isSyncingNow = false,
-                            syncSuccessMessage = "Successfully synced ${result.data} record(s)"
+                            syncSuccessMessage = message
                         )
                     }
+                    _toastEventChannel.send(message)
+                }
+                is Resource.Error -> {
+                    val errorMessage = result.message ?: "Sync failed. Please check your internet connection or try again later."
+                    _uiState.update {
+                        it.copy(
+                            isSyncingNow = false,
+                            syncSuccessMessage = errorMessage
+                        )
+                    }
+                    _toastEventChannel.send(errorMessage)
                 }
                 else -> {
-                    _uiState.update {
-                        it.copy(
-                            isSyncingNow = false,
-                            syncSuccessMessage = "Device is offline. Will sync automatically when connected."
-                        )
-                    }
+                    _uiState.update { it.copy(isSyncingNow = false) }
                 }
             }
         }
     }
+
 
     fun promptClearHistory(show: Boolean) {
         _uiState.update { it.copy(showClearHistoryDialog = show) }

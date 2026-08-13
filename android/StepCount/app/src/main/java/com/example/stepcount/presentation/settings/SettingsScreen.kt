@@ -1,5 +1,6 @@
 package com.example.stepcount.presentation.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.stepcount.core.components.ConfirmationDialog
@@ -30,12 +32,21 @@ fun SettingsScreen(
     onLogoutSuccess: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // Display user-friendly Toast notifications for manual sync results/errors
+    LaunchedEffect(Unit) {
+        viewModel.toastMessageEvent.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
 
     LaunchedEffect(state.isLoggedOut) {
         if (state.isLoggedOut) {
             onLogoutSuccess()
         }
     }
+
 
     Scaffold(
         topBar = {
