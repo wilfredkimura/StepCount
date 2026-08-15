@@ -33,8 +33,8 @@ android {
         applicationId = "com.example.stepcount"
         minSdk = 24
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 5
+        versionName = "1.2.2"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -46,6 +46,8 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            // Use debug signing key so release APK is properly signed and can be installed on Android devices without certificate errors
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

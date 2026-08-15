@@ -9,23 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.2.2] - 2026-08-15
+
 ### Added
-- **FastAPI Asynchronous Backend Architecture:** Modular clean backend package layer (`app/api/v1`, `app/core`, `app/db`, `app/models`, `app/schemas`, `app/services`).
-- **NeonDB PostgreSQL Database Layer:** Asynchronous engine with `asyncpg`, connection pooling, serverless SSL mode, and SQLAlchemy 2.0 ORM models (`User` and `DailySteps` with foreign key cascade and unique date constraints).
-- **Live Firebase Admin SDK Authentication:** Production-ready token verification via `get_current_user` dependency, auto-provisioning, and secure `serviceAccountKey.json` / environment variable configuration.
-- **5 Core REST API Resource Sets:**
-  1. `POST /api/auth/firebase-login` and `POST /api/auth/logout`.
-  2. `POST /api/steps` (idempotent upsert), `GET /api/steps/today`, `GET /api/steps/history`, `PUT /api/steps/{date}`, `DELETE /api/steps/{date}`.
-  3. `GET /api/leaderboard` (filtered by `today`, `week`, `all_time` and ranked by `steps` or `goal` percentage) and `GET /api/leaderboard/me`.
-  4. `GET /api/profile` and `PUT /api/profile` (updating display name and daily target).
-  5. `GET /api/motivation` (Quotable API client with resilient curated local fallback).
-- **Render Free Tier Deployment Guide:** Clean documentation in [backend/README.md](file:///c:/Users/kimushzyyy/Documents/SCHOOL%20PROJECTS%203.2/StepCount/backend/README.md) for 1-click cloud deployment without Docker.
-- **Automated Backend Pytest Suite:** 100% test pass rate with **87% overall test coverage** across all routes and services.
-- **Dynamic Backend URL via `local.properties`:** Added automated Gradle build property parsing for `backend.url` / `BACKEND_URL` in [build.gradle.kts](file:///c:/Users/kimushzyyy/Documents/SCHOOL%20PROJECTS%203.2/StepCount/android/StepCount/app/build.gradle.kts), exposing `BuildConfig.BASE_URL` with fallback to local emulator URL and customizable `local.properties.example` template.
-- **Backend Console Identification & Logging:** Added structured ASCII logs in FastAPI for connected users (`[USER CONNECTED]`), account creation (`[NEW USER CREATED]`), authentication sync (`[AUTH SYNC]`), step upload (`[DATA SYNC]`), and quote requests (`[QUOTE REQUEST]`).
-- **Complete Firebase Auth Pipeline:** Implemented `displayName` profile updates on registration in `FirebaseAuthService`, programmatic `FirebaseOptions` fallback matching `google-services.json`, and Room database user profile synchronization on login/register.
-- **Graceful Client Sync & Toast Notifications:** Added detailed network exception classification (`UnknownHostException`, `ConnectException`, `SocketTimeoutException`, HTTP 5xx) with user-friendly Toast alerts in `SettingsScreen`.
-- **Today's Steps Home Screen Widget:** Added Android AppWidget displaying today's live steps, progress bar, calories, and daily goal percentage with Room Database SSOT integration, Material Design 3 dark athletic theme, and real-time updates.
+- **24/7 Delta Accumulation Engine (`StepDeltaTracker`):** Centralized step tracking component that computes incremental step differences from `Sensor.TYPE_STEP_COUNTER` hardware register, eliminating morning step data loss across midnight transitions.
+- **Battery-Preserving Periodic Checkpoint Worker (`StepPeriodicCheckWorker`):** AndroidX `WorkManager` background worker that executes rapid (<500ms) periodic sensor samples, records deltas to Room database, and automatically refreshes the Home Screen Widget without waking the CPU or draining battery.
+- **Reboot & Power-Off Resilience (`BootAndShutdownReceiver`):** BroadcastReceiver handling `ACTION_SHUTDOWN` to capture the final step snapshot before power-off and `ACTION_BOOT_COMPLETED` to recalibrate the hardware baseline to 0.
+- **Unit Test Suite Expansion (`StepDeltaTrackerTest`):** Added comprehensive automated unit tests covering intra-day increments, midnight crossovers, device reboots, and zero-delta edge cases with 100% test pass rate.
+
+### Changed
+- **Sensor Delegation in `StepSensorManager`:** Refactored `StepSensorManager` to delegate hardware readings to `StepDeltaTracker`, ensuring instant catch-up when opening the app and live real-time counting while in foreground.
+- **Manifest Permissions:** Added `RECEIVE_BOOT_COMPLETED` permission in `AndroidManifest.xml` for post-boot recovery.
+- **Version Increment:** Bumped Android application version to `1.2.2` (`versionCode = 5`).
+
+---
+
+## [1.2.1] - 2026-08-15
+
+### Changed
+- **Release Signing Configuration:** Configured release builds to use the signing configuration in `build.gradle.kts` so that production and release APKs are properly signed, eliminating `INSTALL_PARSE_FAILED_NO_CERTIFICATES` installation errors.
+- **Version Increment:** Bumped Android application version to `1.2.1` (`versionCode = 4`).
+
+### Fixed
+- **Unsigned APK Installation Failure:** Resolved Android installation rejection caused by unsigned release builds when sideloading or installing via ADB.
 
 ---
 
