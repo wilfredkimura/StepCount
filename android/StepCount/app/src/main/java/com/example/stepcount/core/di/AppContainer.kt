@@ -34,6 +34,12 @@ class AppContainer(context: Context) {
         context = context
     )
 
+    val stepDeltaTracker = com.example.stepcount.sensor.StepDeltaTracker(
+        prefs = context.getSharedPreferences(com.example.stepcount.core.util.Constants.PREFS_NAME, Context.MODE_PRIVATE),
+        stepRepository = stepRepository,
+        context = context
+    )
+
 
     val leaderboardRepository: LeaderboardRepository = LeaderboardRepositoryImpl(
         authService = authService,
