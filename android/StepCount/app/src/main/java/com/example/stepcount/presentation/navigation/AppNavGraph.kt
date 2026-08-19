@@ -80,6 +80,7 @@ fun AppNavGraph(
                     getTodayStepsUseCase = container.getTodayStepsUseCase,
                     recordStepDeltaUseCase = container.recordStepDeltaUseCase,
                     getMotivationalQuoteUseCase = container.getMotivationalQuoteUseCase,
+                    getStreakUseCase = container.getStreakUseCase,
                     authRepository = container.authRepository
                 )
             }

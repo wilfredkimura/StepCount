@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import com.example.stepcount.domain.usecase.GetStreakUseCase
+
 /**
  * ViewModel managing live step counting, daily goal metrics, and motivational quotes.
  */
@@ -20,6 +22,7 @@ class DashboardViewModel(
     private val getTodayStepsUseCase: GetTodayStepsUseCase,
     private val recordStepDeltaUseCase: RecordStepDeltaUseCase,
     private val getMotivationalQuoteUseCase: GetMotivationalQuoteUseCase,
+    private val getStreakUseCase: GetStreakUseCase,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
@@ -29,7 +32,16 @@ class DashboardViewModel(
     init {
         observeUserProfile()
         observeTodaySteps()
+        observeStreak()
         fetchMotivationalQuote()
+    }
+
+    private fun observeStreak() {
+        viewModelScope.launch {
+            getStreakUseCase().collect { streakInfo ->
+                _uiState.update { it.copy(streakInfo = streakInfo) }
+            }
+        }
     }
 
     private fun observeUserProfile() {
