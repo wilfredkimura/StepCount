@@ -62,6 +62,7 @@ class AppContainer(context: Context) {
     val recordStepDeltaUseCase = RecordStepDeltaUseCase(stepRepository)
     val getStepHistoryUseCase = GetStepHistoryUseCase(stepRepository)
     val deleteStepRecordUseCase = DeleteStepRecordUseCase(stepRepository)
+    val getStreakUseCase = GetStreakUseCase(stepRepository)
     val getLeaderboardUseCase = GetLeaderboardUseCase(leaderboardRepository)
     val getMotivationalQuoteUseCase = GetMotivationalQuoteUseCase(motivationRepository)
     val syncPendingStepsUseCase = SyncPendingStepsUseCase(stepRepository)
