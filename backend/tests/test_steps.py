@@ -75,3 +75,22 @@ async def test_update_and_delete_steps_for_date(client: AsyncClient):
     # Deleting again should return 404
     res_del_again = await client.delete(f"/api/steps/{date_str}", headers=headers)
     assert res_del_again.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_user_streak(client: AsyncClient):
+    """Verifies calculating streak stats via backend."""
+    headers = {"Authorization": "Bearer test_token_runner_streak"}
+    today = date.today()
+    today_str = today.isoformat()
+
+    # Upload met goals
+    await client.post("/api/steps", json={"date": today_str, "steps": 10000, "goal": 8000}, headers=headers)
+    
+    res = await client.get("/api/steps/streak", headers=headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["current_streak"] == 1
+    assert data["best_streak"] == 1
+    assert data["total_goal_days"] == 1
+

@@ -32,3 +32,13 @@ class StepResponseDto(BaseModel):
     goal: int = Field(..., description="Active step goal")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class StreakResponseDto(BaseModel):
+    """User streak statistics response."""
+    current_streak: int = Field(default=0, description="Active consecutive days meeting daily goal")
+    best_streak: int = Field(default=0, description="Longest historical daily goal streak")
+    total_goal_days: int = Field(default=0, description="Total days meeting daily goal")
+
+    model_config = ConfigDict(from_attributes=True)
+
