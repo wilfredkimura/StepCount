@@ -351,7 +351,7 @@ fun SettingsScreen(
 
             // App Version Footer
             Text(
-                text = "StepCount Version 1.0.0",
+                text = "StepCount Version 1.3.0",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
