@@ -105,7 +105,8 @@ fun AppNavGraph(
             val historyViewModel: HistoryViewModel = remember {
                 HistoryViewModel(
                     getStepHistoryUseCase = container.getStepHistoryUseCase,
-                    deleteStepRecordUseCase = container.deleteStepRecordUseCase
+                    deleteStepRecordUseCase = container.deleteStepRecordUseCase,
+                    getStreakUseCase = container.getStreakUseCase
                 )
             }
             HistoryScreen(
@@ -145,7 +146,8 @@ fun AppNavGraph(
                 ProfileViewModel(
                     authRepository = container.authRepository,
                     stepRepository = container.stepRepository,
-                    updateDailyGoalUseCase = container.updateDailyGoalUseCase
+                    updateDailyGoalUseCase = container.updateDailyGoalUseCase,
+                    getStreakUseCase = container.getStreakUseCase
                 )
             }
             ProfileScreen(

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.stepcount.domain.model.DailyStepRecord
 import com.example.stepcount.domain.usecase.DeleteStepRecordUseCase
 import com.example.stepcount.domain.usecase.GetStepHistoryUseCase
+import com.example.stepcount.domain.usecase.GetStreakUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,11 +13,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel managing historical step logs, filtering by timeframe, and deleting records.
+ * ViewModel managing historical step logs, filtering by timeframe, streaks, and deleting records.
  */
 class HistoryViewModel(
     private val getStepHistoryUseCase: GetStepHistoryUseCase,
-    private val deleteStepRecordUseCase: DeleteStepRecordUseCase
+    private val deleteStepRecordUseCase: DeleteStepRecordUseCase,
+    private val getStreakUseCase: GetStreakUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HistoryUiState())
@@ -24,6 +26,15 @@ class HistoryViewModel(
 
     init {
         loadHistory("all")
+        observeStreak()
+    }
+
+    private fun observeStreak() {
+        viewModelScope.launch {
+            getStreakUseCase().collect { streak ->
+                _uiState.update { it.copy(streakInfo = streak) }
+            }
+        }
     }
 
     fun onFilterSelected(filter: String) {

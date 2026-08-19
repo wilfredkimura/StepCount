@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.stepcount.domain.repository.AuthRepository
 import com.example.stepcount.domain.repository.StepRepository
+import com.example.stepcount.domain.usecase.GetStreakUseCase
 import com.example.stepcount.domain.usecase.UpdateDailyGoalUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,8 @@ import kotlinx.coroutines.launch
 class ProfileViewModel(
     private val authRepository: AuthRepository,
     private val stepRepository: StepRepository,
-    private val updateDailyGoalUseCase: UpdateDailyGoalUseCase
+    private val updateDailyGoalUseCase: UpdateDailyGoalUseCase,
+    private val getStreakUseCase: GetStreakUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -26,6 +28,15 @@ class ProfileViewModel(
     init {
         observeProfile()
         observeLifetimeSteps()
+        observeStreak()
+    }
+
+    private fun observeStreak() {
+        viewModelScope.launch {
+            getStreakUseCase().collect { streak ->
+                _uiState.update { it.copy(streakInfo = streak) }
+            }
+        }
     }
 
     private fun observeProfile() {

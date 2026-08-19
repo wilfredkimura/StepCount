@@ -1,5 +1,6 @@
 package com.example.stepcount.presentation.profile
 
+import com.example.stepcount.domain.model.StreakInfo
 import com.example.stepcount.domain.model.UserProfile
 
 /**
@@ -9,6 +10,7 @@ data class ProfileUiState(
     val userProfile: UserProfile? = null,
     val currentGoal: Int = 8000,
     val totalLifetimeSteps: Long = 0L,
+    val streakInfo: StreakInfo = StreakInfo(),
     val isEditingGoal: Boolean = false,
     val tempGoalInput: String = "8000",
     val isLoading: Boolean = false,

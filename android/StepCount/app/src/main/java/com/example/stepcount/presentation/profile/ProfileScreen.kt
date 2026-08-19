@@ -21,6 +21,7 @@ import com.example.stepcount.core.components.MetricCard
 import com.example.stepcount.core.components.PrimaryButton
 import com.example.stepcount.core.components.SecondaryButton
 import com.example.stepcount.core.components.StepBottomNavBar
+import com.example.stepcount.core.theme.GoalMetGreen
 import com.example.stepcount.core.theme.MetricCaloriesColor
 import com.example.stepcount.core.theme.MetricDistanceColor
 import com.example.stepcount.core.theme.MetricTimeColor
@@ -193,7 +194,7 @@ fun ProfileScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 3 Metric Cards for Lifetime Totals
+            // 2x2 Metric Cards for Lifetime Totals & Streaks
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -212,11 +213,26 @@ fun ProfileScreen(
                     iconTint = MetricDistanceColor,
                     modifier = Modifier.weight(1f)
                 )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 MetricCard(
                     label = "Calories",
                     value = "%,d kcal".format(state.totalCalories),
                     icon = Icons.Rounded.LocalFireDepartment,
                     iconTint = MetricCaloriesColor,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricCard(
+                    label = "Best Streak",
+                    value = "${state.streakInfo.bestStreak} Days",
+                    icon = Icons.Rounded.EmojiEvents,
+                    iconTint = GoalMetGreen,
                     modifier = Modifier.weight(1f)
                 )
             }
