@@ -27,6 +27,7 @@ import java.util.Locale
 class StepDeltaTracker(
     private val prefs: SharedPreferences,
     private val stepRepository: StepRepository,
+    private val notificationHelper: com.example.stepcount.core.notification.StepNotificationHelper? = null,
     private val context: Context? = null
 ) {
 
@@ -89,6 +90,10 @@ class StepDeltaTracker(
 
         // Save updated steps to Room database
         stepRepository.saveDailySteps(todayDate, updatedTodaySteps)
+
+        // Evaluate milestone and goal notifications
+        val activeGoal = existingTodayRecord?.goal ?: Constants.DEFAULT_DAILY_GOAL
+        notificationHelper?.checkAndNotify(updatedTodaySteps, activeGoal, todayDate)
 
         // Update preferences with latest hardware reading and date
         prefs.edit()
