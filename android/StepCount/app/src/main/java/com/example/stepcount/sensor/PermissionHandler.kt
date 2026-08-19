@@ -28,6 +28,20 @@ fun hasActivityRecognitionPermission(context: Context): Boolean {
 }
 
 /**
+ * Checks if the notification posting permission has been granted by the user (Android 13+ / API 33+).
+ */
+fun hasNotificationPermission(context: Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        true // Granted at install time for Android 12 and below
+    }
+}
+
+/**
  * Composable dialog providing a clear explanation to the user before prompting for sensor permissions.
  */
 @Composable

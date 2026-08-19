@@ -47,6 +47,12 @@ fun SettingsScreen(
         }
     }
 
+    val notifPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.toggleNotifications(isGranted)
+    }
+
 
     Scaffold(
         topBar = {
@@ -115,6 +121,142 @@ fun SettingsScreen(
                             checked = state.isKilometers,
                             onCheckedChange = { viewModel.toggleUnits(it) }
                         )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Goal & Milestone Notifications Section
+            Text(
+                text = "Goal Notifications",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Main Notification Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.NotificationsActive,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Goal & Milestone Alerts",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Notify when reaching milestone & 100% goal",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = state.isNotificationsEnabled,
+                            onCheckedChange = { enabled ->
+                                if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && !com.example.stepcount.sensor.hasNotificationPermission(context)) {
+                                    notifPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    viewModel.toggleNotifications(enabled)
+                                }
+                            }
+                        )
+                    }
+
+                    if (state.isNotificationsEnabled) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                        Text(
+                            text = "Custom Milestone Alert Point",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Choose the progress point (e.g. 50% or 65%) to get a motivational alert.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Preset Milestone Percentage Chips
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(50, 65, 75, 80).forEach { preset ->
+                                val selected = state.milestonePercentage == preset
+                                FilterChip(
+                                    selected = selected,
+                                    onClick = { viewModel.setMilestonePercentage(preset) },
+                                    label = { Text("$preset%") },
+                                    leadingIcon = if (selected) {
+                                        { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                                    } else null
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Continuous Slider for Custom Percentage Selection
+                        Text(
+                            text = "Milestone Threshold: ${state.milestonePercentage}% of goal",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Slider(
+                            value = state.milestonePercentage.toFloat(),
+                            onValueChange = { viewModel.setMilestonePercentage(it.toInt()) },
+                            valueRange = 25f..90f,
+                            steps = 12
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Test Notification Trigger Button
+                        OutlinedButton(
+                            onClick = {
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && !com.example.stepcount.sensor.hasNotificationPermission(context)) {
+                                    notifPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    viewModel.sendTestNotification()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Notifications,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Send Test Milestone Notification")
+                        }
                     }
                 }
             }

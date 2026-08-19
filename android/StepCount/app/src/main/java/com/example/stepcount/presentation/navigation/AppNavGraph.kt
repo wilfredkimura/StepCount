@@ -169,7 +169,9 @@ fun AppNavGraph(
                 SettingsViewModel(
                     authRepository = container.authRepository,
                     stepRepository = container.stepRepository,
-                    syncPendingStepsUseCase = container.syncPendingStepsUseCase
+                    syncPendingStepsUseCase = container.syncPendingStepsUseCase,
+                    notificationHelper = container.stepNotificationHelper,
+                    prefs = context.getSharedPreferences(com.example.stepcount.core.util.Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
                 )
             }
             SettingsScreen(

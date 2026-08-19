@@ -1,7 +1,10 @@
 package com.example.stepcount.presentation.settings
 
+import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.stepcount.core.notification.StepNotificationHelper
+import com.example.stepcount.core.util.Constants
 import com.example.stepcount.domain.model.Resource
 import com.example.stepcount.domain.repository.AuthRepository
 import com.example.stepcount.domain.repository.StepRepository
@@ -16,12 +19,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel managing user preferences, manual synchronization, and account deletion.
+ * ViewModel managing user preferences, goal notification milestones, manual synchronization, and account management.
  */
 class SettingsViewModel(
     private val authRepository: AuthRepository,
     private val stepRepository: StepRepository,
-    private val syncPendingStepsUseCase: SyncPendingStepsUseCase
+    private val syncPendingStepsUseCase: SyncPendingStepsUseCase,
+    private val notificationHelper: StepNotificationHelper? = null,
+    private val prefs: SharedPreferences? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -31,12 +36,61 @@ class SettingsViewModel(
     private val _toastEventChannel = Channel<String>(Channel.BUFFERED)
     val toastMessageEvent: Flow<String> = _toastEventChannel.receiveAsFlow()
 
+    init {
+        loadPreferences()
+    }
+
+    /**
+     * Loads saved user preferences from SharedPreferences into UI state.
+     */
+    private fun loadPreferences() {
+        prefs?.let { p ->
+            val isDark = p.getBoolean(Constants.KEY_DARK_MODE, false)
+            val isKm = p.getBoolean(Constants.KEY_STEP_UNITS, true)
+            val isNotifEnabled = p.getBoolean(Constants.KEY_NOTIFICATIONS_ENABLED, true)
+            val milestonePct = p.getInt(Constants.KEY_MILESTONE_PERCENTAGE, Constants.DEFAULT_MILESTONE_PERCENTAGE)
+
+            _uiState.update {
+                it.copy(
+                    isDarkMode = isDark,
+                    isKilometers = isKm,
+                    isNotificationsEnabled = isNotifEnabled,
+                    milestonePercentage = milestonePct
+                )
+            }
+        }
+    }
+
     fun toggleDarkMode(enabled: Boolean) {
         _uiState.update { it.copy(isDarkMode = enabled) }
+        prefs?.edit()?.putBoolean(Constants.KEY_DARK_MODE, enabled)?.apply()
     }
 
     fun toggleUnits(isKm: Boolean) {
         _uiState.update { it.copy(isKilometers = isKm) }
+        prefs?.edit()?.putBoolean(Constants.KEY_STEP_UNITS, isKm)?.apply()
+    }
+
+    fun toggleNotifications(enabled: Boolean) {
+        _uiState.update { it.copy(isNotificationsEnabled = enabled) }
+        prefs?.edit()?.putBoolean(Constants.KEY_NOTIFICATIONS_ENABLED, enabled)?.apply()
+    }
+
+    fun setMilestonePercentage(percentage: Int) {
+        val clamped = percentage.coerceIn(10, 95)
+        _uiState.update { it.copy(milestonePercentage = clamped) }
+        prefs?.edit()?.putInt(Constants.KEY_MILESTONE_PERCENTAGE, clamped)?.apply()
+    }
+
+    fun sendTestNotification() {
+        viewModelScope.launch {
+            if (notificationHelper != null) {
+                notificationHelper.sendTestNotification()
+                _toastEventChannel.send("Test goal notification posted to notifications tray!")
+            } else {
+                _toastEventChannel.send("Notifications active: milestone alert set at ${_uiState.value.milestonePercentage}%")
+            }
+        }
     }
 
     fun syncNow() {
