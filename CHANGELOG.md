@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-08-20
+
+### Added
+- **Goal Completion & Custom Milestone Notifications (`StepNotificationHelper`):** High-priority Android notification channel (`stepcount_goals_channel`) alerting users upon reaching customizable milestone progress points (such as 50%, 65%, 75%, 80%) and celebrating 100% daily goal completion with dynamic motivational quotes from Quotable API.
+- **Custom Milestone Configuration in Settings:** Dedicated "Goal Notifications" card with master toggle, preset milestone chips (50%, 65%, 75%, 80%), continuous milestone percentage slider (25% to 90%), and an instant test notification trigger with Android 13+ runtime permission handling.
+- **Offline-First Streak Calculation Engine (`GetStreakUseCase`):** Pure domain use case computing active consecutive daily streaks, longest historical best streak, and total goal met days directly from Room database without requiring network access.
+- **Active Streak Badge & Celebration on Dashboard:** Animated flame streak badge (`🔥 X Day Streak`) on top bar and celebratory goal achieved banner highlighting current streak upon hitting daily step targets.
+- **Lifetime Best Streak on Profile:** 2x2 Lifetime Statistics grid displaying Total Steps, Distance, Calories Burned, and Best Streak (`🔥 X Days`).
+- **Walking History Streak Summary Header:** Overview card in History screen tracking Current Streak, Best Streak, and Total Goals Hit with "Goal Met" checkmarks on daily log cards.
+- **Backend Streak Calculation Service & API (`GET /api/steps/streak`):** Async FastAPI endpoint and service method computing user streak records from PostgreSQL database.
+- **Automated Test Suite Expansion:** Added unit test suites for streak computation (`GetStreakUseCaseTest`), view models (`DashboardViewModelTest`, `HistoryViewModelTest`), and backend endpoint (`test_get_user_streak`).
+
+### Changed
+- **Sensor Delta Hook:** Wired `StepDeltaTracker` to trigger milestone and goal completion checks on every live step reading.
+- **Version Increment:** Bumped Android application version to `1.3.0` (`versionCode = 6`).
+
+---
+
 ## [1.2.2] - 2026-08-15
 
 ### Added
