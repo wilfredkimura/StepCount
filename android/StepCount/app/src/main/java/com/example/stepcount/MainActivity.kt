@@ -20,7 +20,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Enqueue periodic background sync whenever online
+        // Enqueue periodic background step checkpoints and sync
+        com.example.stepcount.worker.StepPeriodicCheckWorker.enqueuePeriodicCheck(applicationContext)
         StepSyncWorker.enqueuePeriodicSync(applicationContext)
 
         setContent {

@@ -1,5 +1,6 @@
 package com.example.stepcount.data.repository
 
+import android.content.Context
 import com.example.stepcount.data.local.dao.DailyStepsDao
 import com.example.stepcount.data.local.dao.UserProfileDao
 import com.example.stepcount.data.local.entity.UserProfileEntity
@@ -9,6 +10,7 @@ import com.example.stepcount.data.remote.dto.FirebaseLoginRequestDto
 import com.example.stepcount.domain.model.Resource
 import com.example.stepcount.domain.model.UserProfile
 import com.example.stepcount.domain.repository.AuthRepository
+import com.example.stepcount.widget.TodayStepWidgetReceiver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -21,8 +23,10 @@ class AuthRepositoryImpl(
     private val authService: FirebaseAuthService,
     private val apiService: StepCountApiService,
     private val userProfileDao: UserProfileDao,
-    private val dailyStepsDao: DailyStepsDao
+    private val dailyStepsDao: DailyStepsDao,
+    private val context: Context? = null
 ) : AuthRepository {
+
 
     override fun getCurrentUser(): Flow<UserProfile?> {
         val currentId = authService.getCurrentUserId() ?: ""
@@ -140,11 +144,13 @@ class AuthRepositoryImpl(
         try {
             val userId = authService.getCurrentUserId() ?: return@withContext Resource.Error("User not logged in")
             userProfileDao.updateDailyGoal(userId, newGoal)
+            context?.let { TodayStepWidgetReceiver.notifyStepsUpdated(it) }
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Failed to update daily goal")
         }
     }
+
 
     override suspend fun deleteAccount(): Resource<Unit> = withContext(Dispatchers.IO) {
         try {

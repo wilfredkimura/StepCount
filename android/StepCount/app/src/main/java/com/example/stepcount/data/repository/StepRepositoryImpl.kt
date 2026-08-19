@@ -1,6 +1,8 @@
 package com.example.stepcount.data.repository
 
+import android.content.Context
 import com.example.stepcount.data.local.dao.DailyStepsDao
+
 import com.example.stepcount.data.local.dao.UserProfileDao
 import com.example.stepcount.data.local.entity.DailyStepsEntity
 import com.example.stepcount.data.remote.api.StepCountApiService
@@ -9,6 +11,7 @@ import com.example.stepcount.data.remote.dto.StepUploadRequestDto
 import com.example.stepcount.domain.model.DailyStepRecord
 import com.example.stepcount.domain.model.Resource
 import com.example.stepcount.domain.repository.StepRepository
+import com.example.stepcount.widget.TodayStepWidgetReceiver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -24,8 +27,10 @@ class StepRepositoryImpl(
     private val authService: FirebaseAuthService,
     private val apiService: StepCountApiService,
     private val dailyStepsDao: DailyStepsDao,
-    private val userProfileDao: UserProfileDao
+    private val userProfileDao: UserProfileDao,
+    private val context: Context? = null
 ) : StepRepository {
+
 
     private fun getTodayDateString(): String {
         val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -81,7 +86,9 @@ class StepRepositoryImpl(
                 synced = false // Always write locally first with synced = false
             )
             dailyStepsDao.upsertDailySteps(entity)
+            context?.let { TodayStepWidgetReceiver.notifyStepsUpdated(it) }
             Resource.Success(Unit)
+
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Failed to save daily steps")
         }
