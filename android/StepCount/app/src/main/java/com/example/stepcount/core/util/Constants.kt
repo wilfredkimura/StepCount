@@ -29,6 +29,19 @@ object Constants {
     const val KEY_STEP_UNITS = "key_step_units"
     const val KEY_GUEST_MODE = "key_guest_mode"
 
+    // Goal and milestone notification preferences
+    const val KEY_NOTIFICATIONS_ENABLED = "key_notifications_enabled"
+    const val KEY_MILESTONE_PERCENTAGE = "key_milestone_percentage"
+    const val KEY_LAST_NOTIFIED_DATE_MILESTONE = "key_last_notified_date_milestone"
+    const val KEY_LAST_NOTIFIED_DATE_GOAL = "key_last_notified_date_goal"
+
+    // Default custom milestone percentage (e.g. 50% of daily goal)
+    const val DEFAULT_MILESTONE_PERCENTAGE = 50
+
+    // Notification Channel ID and Name for daily goals and milestones
+    const val NOTIFICATION_CHANNEL_GOALS = "stepcount_goals_channel"
+    const val NOTIFICATION_CHANNEL_GOALS_NAME = "Daily Goal & Milestone Alerts"
+
     // Backend Base URL (delegates to AppConfig for easy local vs Render switching)
     val BACKEND_BASE_URL: String
         get() = AppConfig.BASE_URL
