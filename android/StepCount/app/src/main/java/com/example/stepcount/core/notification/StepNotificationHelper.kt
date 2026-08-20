@@ -176,7 +176,7 @@ class StepNotificationHelper(
         )
 
         val builder = NotificationCompat.Builder(context, Constants.NOTIFICATION_CHANNEL_GOALS)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(shortText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(expandedText))
@@ -187,8 +187,8 @@ class StepNotificationHelper(
 
         try {
             NotificationManagerCompat.from(context).notify(notificationId, builder.build())
-        } catch (e: SecurityException) {
-            // Catches missing POST_NOTIFICATIONS permission gracefully
+        } catch (e: Throwable) {
+            android.util.Log.e("StepNotificationHelper", "Failed to post notification $notificationId: ${e.message}", e)
         }
     }
 
@@ -199,11 +199,11 @@ class StepNotificationHelper(
         if (motivationRepository != null) {
             try {
                 val result = motivationRepository.getMotivationalQuote()
-                if (result is Resource.Success) {
+                if (result is Resource.Success && result.data != null) {
                     return result.data
                 }
-            } catch (e: Exception) {
-                // Use fallback quote below
+            } catch (e: Throwable) {
+                android.util.Log.w("StepNotificationHelper", "Failed to fetch remote quote, using fallback", e)
             }
         }
         return MotivationalQuote(
