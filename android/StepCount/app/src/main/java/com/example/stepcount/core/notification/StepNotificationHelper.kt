@@ -95,10 +95,11 @@ class StepNotificationHelper(
             lastNotifiedMilestoneDate != todayDate
         ) {
             val quote = fetchQuoteSafe()
+            val formattedSteps = "%,d".format(todaySteps)
+            val formattedGoal = "%,d".format(goal)
             val title = "🏃 $milestonePercentage% Daily Goal Reached!"
-            val shortText = "You've walked %,d / %,d steps ($milestonePercentage%). Keep going!".format(todaySteps, goal)
-            val expandedText = "You've walked %,d of %,d steps today ($milestonePercentage% of your daily goal)!\n\n\"%s\"\n— %s"
-                .format(todaySteps, goal, quote.quote, quote.author)
+            val shortText = "You've walked $formattedSteps / $formattedGoal steps ($milestonePercentage%). Keep going!"
+            val expandedText = "You've walked $formattedSteps of $formattedGoal steps today ($milestonePercentage% of your daily goal)!\n\n\"${quote.quote}\"\n— ${quote.author}"
 
             postNotification(
                 notificationId = NOTIFICATION_ID_MILESTONE,
@@ -114,10 +115,10 @@ class StepNotificationHelper(
         // Step 4: Check 100% Goal Completion Celebration Alert
         if (todaySteps >= goal && lastNotifiedGoalDate != todayDate) {
             val quote = fetchQuoteSafe()
+            val formattedGoal = "%,d".format(goal)
             val title = "🎉 Daily Goal Achieved!"
-            val shortText = "Awesome job! You hit your %,d step goal today! 🔥".format(goal)
-            val expandedText = "Congratulations! You completed your daily goal of %,d steps today! Your walking streak is active 🔥\n\n\"%s\"\n— %s"
-                .format(goal, quote.quote, quote.author)
+            val shortText = "Awesome job! You hit your $formattedGoal step goal today! 🔥"
+            val expandedText = "Congratulations! You completed your daily goal of $formattedGoal steps today! Your walking streak is active 🔥\n\n\"${quote.quote}\"\n— ${quote.author}"
 
             postNotification(
                 notificationId = NOTIFICATION_ID_GOAL,
@@ -139,8 +140,7 @@ class StepNotificationHelper(
         val milestonePercentage = prefs.getInt(Constants.KEY_MILESTONE_PERCENTAGE, Constants.DEFAULT_MILESTONE_PERCENTAGE)
         val title = "🎯 StepCount Notification Test"
         val shortText = "Milestone alerts are set to $milestonePercentage%. Everything is working!"
-        val expandedText = "Goal notifications are enabled with your custom $milestonePercentage% milestone threshold!\n\n\"%s\"\n— %s"
-            .format(quote.quote, quote.author)
+        val expandedText = "Goal notifications are enabled with your custom $milestonePercentage% milestone threshold!\n\n\"${quote.quote}\"\n— ${quote.author}"
 
         postNotification(
             notificationId = NOTIFICATION_ID_TEST,

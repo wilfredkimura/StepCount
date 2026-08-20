@@ -189,8 +189,9 @@ class StepForegroundService : Service(), SensorEventListener {
         )
 
         val percentage = if (goal > 0) ((steps.toFloat() / goal.toFloat()) * 100).toInt() else 0
+        val formattedSteps = "%,d".format(steps)
         val contentText = if (steps > 0) {
-            "%,d steps today • %d%% of daily goal".format(steps, percentage)
+            "$formattedSteps steps today • $percentage% of daily goal"
         } else {
             "Tracking your daily walking steps in background"
         }
