@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.1] - 2026-08-20
+
+### Added
+- **24/7 Persistent Background Step Tracking (`StepForegroundService`):** Background Foreground Service running with `START_STICKY` and `FOREGROUND_SERVICE_TYPE_HEALTH` on Android 14+ that keeps hardware sensors continuously active in the background with a low-priority, silent live step counter notification in the status bar.
+- **Automated Daily Midnight Rollover Engine (`MidnightStepRolloverReceiver`):** Exact midnight alarm (`AlarmManager.setExactAndAllowWhileIdle`) firing daily at `00:00:00` to finalize each day's step tally into Room database and reset today's baseline to 0, ensuring that users who only open the app once a week have full, accurate day-by-day history recorded.
+- **Dedicated 24x24dp Monochrome Notification Asset (`ic_notification.xml`):** Pure white vector drawable designed for system notifications and status bar icons.
+- **Background Tracking & Battery Optimization Controls in Settings:** Toggle for 24/7 background tracking and shortcut button guiding users to exempt StepCount from aggressive OEM battery savers (Samsung, Xiaomi, etc.).
+
+### Fixed
+- **Notification Crash on Test Notification Dispatch:** Resolved app crash caused by passing multi-layered adaptive icon drawables to `NotificationCompat.Builder.setSmallIcon()` by replacing it with a compliant 24dp monochrome icon and adding global exception safety.
+- **Unattended Multi-Day Step Loss:** Resolved issue where steps walked over multiple days without opening the app were missed or attributed only to the current day upon opening.
+
+### Changed
+- **Version Increment:** Bumped Android application version to `1.3.1` (`versionCode = 7`).
+
+---
+
 ## [1.3.0] - 2026-08-20
 
 ### Added
