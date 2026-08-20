@@ -48,6 +48,7 @@ class SettingsViewModel(
             val isDark = p.getBoolean(Constants.KEY_DARK_MODE, false)
             val isKm = p.getBoolean(Constants.KEY_STEP_UNITS, true)
             val isNotifEnabled = p.getBoolean(Constants.KEY_NOTIFICATIONS_ENABLED, true)
+            val isPersistentEnabled = p.getBoolean(Constants.KEY_PERSISTENT_TRACKING_ENABLED, true)
             val milestonePct = p.getInt(Constants.KEY_MILESTONE_PERCENTAGE, Constants.DEFAULT_MILESTONE_PERCENTAGE)
 
             _uiState.update {
@@ -55,6 +56,7 @@ class SettingsViewModel(
                     isDarkMode = isDark,
                     isKilometers = isKm,
                     isNotificationsEnabled = isNotifEnabled,
+                    isPersistentTrackingEnabled = isPersistentEnabled,
                     milestonePercentage = milestonePct
                 )
             }
@@ -74,6 +76,17 @@ class SettingsViewModel(
     fun toggleNotifications(enabled: Boolean) {
         _uiState.update { it.copy(isNotificationsEnabled = enabled) }
         prefs?.edit()?.putBoolean(Constants.KEY_NOTIFICATIONS_ENABLED, enabled)?.apply()
+    }
+
+    fun togglePersistentTracking(context: android.content.Context, enabled: Boolean) {
+        _uiState.update { it.copy(isPersistentTrackingEnabled = enabled) }
+        prefs?.edit()?.putBoolean(Constants.KEY_PERSISTENT_TRACKING_ENABLED, enabled)?.apply()
+        if (enabled) {
+            com.example.stepcount.sensor.StepForegroundService.startService(context.applicationContext)
+            com.example.stepcount.sensor.MidnightStepRolloverReceiver.scheduleMidnightAlarm(context.applicationContext)
+        } else {
+            com.example.stepcount.sensor.StepForegroundService.stopService(context.applicationContext)
+        }
     }
 
     fun setMilestonePercentage(percentage: Int) {
