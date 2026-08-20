@@ -20,6 +20,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Start 24/7 background step tracking service & midnight rollover alarm
+        com.example.stepcount.sensor.StepForegroundService.startService(applicationContext)
+        com.example.stepcount.sensor.MidnightStepRolloverReceiver.scheduleMidnightAlarm(applicationContext)
+
         // Enqueue periodic background step checkpoints and sync
         com.example.stepcount.worker.StepPeriodicCheckWorker.enqueuePeriodicCheck(applicationContext)
         StepSyncWorker.enqueuePeriodicSync(applicationContext)

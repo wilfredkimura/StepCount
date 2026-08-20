@@ -44,9 +44,15 @@ class BootAndShutdownReceiver : BroadcastReceiver() {
                     }
 
                     Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED -> {
-                        android.util.Log.i("BootAndShutdownReceiver", "Boot / package replacement detected. Resetting baseline...")
+                        android.util.Log.i("BootAndShutdownReceiver", "Boot / package replacement detected. Resetting baseline and restarting background tracking...")
                         // Reset baseline for new hardware lifecycle
                         container.stepDeltaTracker.onDeviceRebooted()
+
+                        // Start 24/7 background foreground tracking service
+                        StepForegroundService.startService(context.applicationContext)
+
+                        // Schedule exact midnight step rollover alarm
+                        MidnightStepRolloverReceiver.scheduleMidnightAlarm(context.applicationContext)
 
                         // Re-enqueue background workers
                         StepPeriodicCheckWorker.enqueuePeriodicCheck(context.applicationContext)

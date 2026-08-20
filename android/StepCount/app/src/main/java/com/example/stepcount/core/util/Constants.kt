@@ -42,6 +42,11 @@ object Constants {
     const val NOTIFICATION_CHANNEL_GOALS = "stepcount_goals_channel"
     const val NOTIFICATION_CHANNEL_GOALS_NAME = "Daily Goal & Milestone Alerts"
 
+    // 24/7 Background Foreground Tracking constants
+    const val KEY_PERSISTENT_TRACKING_ENABLED = "key_persistent_tracking_enabled"
+    const val NOTIFICATION_CHANNEL_FOREGROUND_TRACKING = "stepcount_foreground_tracking_channel"
+    const val NOTIFICATION_CHANNEL_FOREGROUND_TRACKING_NAME = "24/7 Step Tracking Service"
+
     // Backend Base URL (delegates to AppConfig for easy local vs Render switching)
     val BACKEND_BASE_URL: String
         get() = AppConfig.BASE_URL
