@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.2] - 2026-08-22
+
+### Added
+- **Anomaly & Glitch Protection Filter (`StepDeltaTracker`):** Added velocity and plausibility validation using hardware reading timestamp tracking (`KEY_LAST_HARDWARE_TIMESTAMP`) to discard impossible step spikes (>15,000 steps jump within short windows or abnormal >12 steps/sec cadence) and safely re-baseline without corrupting daily history.
+- **Dedicated Application Update Handler (`BootAndShutdownReceiver`):** Added `handleAppUpdated` to capture steps walked during APK update downtime, restart 24/7 background tracking services, and refresh the Home Screen widget while keeping the cumulative baseline intact.
+- **Comprehensive Unit Tests (`StepDeltaTrackerTest`):** Added test coverage for app update baseline preservation, anomaly rejection, and concurrent reading synchronization.
+
+### Fixed
+- **Phantom Steps on App Updates / Package Replacement:** Resolved critical bug in `BootAndShutdownReceiver` where installing an updated version triggered `ACTION_MY_PACKAGE_REPLACED` and wiped the hardware counter baseline to `0L`, generating thousands of made-up steps.
+- **Step Double-Counting from Concurrent Listeners:** Resolved race conditions between the background foreground service, UI listeners, and periodic workers by adding coroutine `Mutex` serialization in `StepDeltaTracker` and removing redundant database writes from `DashboardViewModel`.
+
+### Changed
+- **Version Increment:** Bumped Android application version to `1.3.2` (`versionCode = 8`).
+
+---
+
 ## [1.3.1] - 2026-08-20
 
 ### Added
