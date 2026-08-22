@@ -43,23 +43,14 @@ class BootAndShutdownReceiver : BroadcastReceiver() {
                         sampleAndCommitSteps(context, container)
                     }
 
-                    Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED -> {
-                        android.util.Log.i("BootAndShutdownReceiver", "Boot / package replacement detected. Resetting baseline and restarting background tracking...")
-                        // Reset baseline for new hardware lifecycle
-                        container.stepDeltaTracker.onDeviceRebooted()
+                    Intent.ACTION_MY_PACKAGE_REPLACED -> {
+                        android.util.Log.i("BootAndShutdownReceiver", "App update detected (ACTION_MY_PACKAGE_REPLACED). Preserving hardware step baseline...")
+                        handleAppUpdated(context, container)
+                    }
 
-                        // Start 24/7 background foreground tracking service
-                        StepForegroundService.startService(context.applicationContext)
-
-                        // Schedule exact midnight step rollover alarm
-                        MidnightStepRolloverReceiver.scheduleMidnightAlarm(context.applicationContext)
-
-                        // Re-enqueue background workers
-                        StepPeriodicCheckWorker.enqueuePeriodicCheck(context.applicationContext)
-                        StepSyncWorker.enqueuePeriodicSync(context.applicationContext)
-
-                        // Refresh home screen widget
-                        TodayStepWidgetReceiver.notifyStepsUpdated(context.applicationContext)
+                    Intent.ACTION_BOOT_COMPLETED -> {
+                        android.util.Log.i("BootAndShutdownReceiver", "Device boot completed. Resetting baseline and restarting background tracking...")
+                        handleDeviceBoot(context, container)
                     }
                 }
             } catch (e: Exception) {
@@ -68,6 +59,50 @@ class BootAndShutdownReceiver : BroadcastReceiver() {
                 pendingResult.finish()
             }
         }
+    }
+
+    /**
+     * Handles app update event. Crucially does NOT reset the hardware counter baseline to 0,
+     * samples any steps walked during the update, and restarts all background services.
+     */
+    private suspend fun handleAppUpdated(context: Context, container: AppContainer) {
+        // Sample current hardware counter to credit steps walked while app was updating
+        sampleAndCommitSteps(context, container)
+
+        // Start 24/7 background foreground tracking service
+        StepForegroundService.startService(context.applicationContext)
+
+        // Schedule exact midnight step rollover alarm
+        MidnightStepRolloverReceiver.scheduleMidnightAlarm(context.applicationContext)
+
+        // Re-enqueue background workers
+        StepPeriodicCheckWorker.enqueuePeriodicCheck(context.applicationContext)
+        StepSyncWorker.enqueuePeriodicSync(context.applicationContext)
+
+        // Refresh home screen widget
+        TodayStepWidgetReceiver.notifyStepsUpdated(context.applicationContext)
+    }
+
+    /**
+     * Handles device power-on boot. Resets hardware counter baseline to 0 since
+     * the hardware sensor starts from 0 upon device reboot.
+     */
+    private fun handleDeviceBoot(context: Context, container: AppContainer) {
+        // Reset baseline for new hardware lifecycle
+        container.stepDeltaTracker.onDeviceRebooted()
+
+        // Start 24/7 background foreground tracking service
+        StepForegroundService.startService(context.applicationContext)
+
+        // Schedule exact midnight step rollover alarm
+        MidnightStepRolloverReceiver.scheduleMidnightAlarm(context.applicationContext)
+
+        // Re-enqueue background workers
+        StepPeriodicCheckWorker.enqueuePeriodicCheck(context.applicationContext)
+        StepSyncWorker.enqueuePeriodicSync(context.applicationContext)
+
+        // Refresh home screen widget
+        TodayStepWidgetReceiver.notifyStepsUpdated(context.applicationContext)
     }
 
     private suspend fun sampleAndCommitSteps(context: Context, container: AppContainer) {
