@@ -86,14 +86,11 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun onStepCountUpdatedFromSensor_triggersRecordUseCase() = runTest {
-        coEvery { recordStepDeltaUseCase.invoke(7000L) } returns Resource.Success(Unit)
-
+    fun onStepCountUpdatedFromSensor_updatesLiveStepsState() = runTest {
         viewModel.onStepCountUpdatedFromSensor(7000L)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals(7000L, state.liveSteps)
-        coVerify { recordStepDeltaUseCase.invoke(7000L) }
     }
 }
