@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Explicit User Registration Endpoint (`POST /api/v1/auth/register`):** FastAPI backend endpoint that creates and commits user profiles to NeonDB PostgreSQL upon registration, returning HTTP 201 Created with verified user profile data.
+- **Guaranteed Registration Provisioning on Android:** Updated `AuthRepositoryImpl.register()` to explicitly call `POST /api/v1/auth/register` and await PostgreSQL database confirmation before completing registration, preventing orphaned Firebase accounts.
+- **Lightweight Firebase-Only Login on Android:** Optimized `AuthRepositoryImpl.login()` to authenticate directly with Firebase Auth without blocking on remote database requests, ensuring instant logins even on cold backend instances.
+- **Vercel Keep-Alive Cron Service (`vercel-cron/`):** Lightweight serverless cron project running every 10 minutes to keep the FastAPI backend on Render awake 24/7.
+
 ---
 
 ## [1.3.2] - 2026-08-22
