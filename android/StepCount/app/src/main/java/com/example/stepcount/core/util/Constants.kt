@@ -24,6 +24,7 @@ object Constants {
     const val PREFS_NAME = "stepcount_preferences"
     const val KEY_DAILY_BASELINE = "key_daily_baseline"
     const val KEY_LAST_HARDWARE_COUNTER = "key_last_hardware_counter"
+    const val KEY_LAST_HARDWARE_TIMESTAMP = "key_last_hardware_timestamp"
     const val KEY_LAST_RECORDED_DATE = "key_last_recorded_date"
     const val KEY_DARK_MODE = "key_dark_mode"
     const val KEY_STEP_UNITS = "key_step_units"
