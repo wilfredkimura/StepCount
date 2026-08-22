@@ -6,6 +6,8 @@ import com.example.stepcount.core.util.Constants
 import com.example.stepcount.domain.repository.StepRepository
 import com.example.stepcount.widget.TodayStepWidgetReceiver
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -22,7 +24,9 @@ import java.util.Locale
  * This guarantees:
  * 1. Zero lost steps across midnight (morning steps before opening the app are credited).
  * 2. Accurate tracking across device reboots (reboot drops counter to 0, which we detect).
- * 3. Consistent synchronization between Room database and the Home Screen widget.
+ * 3. Thread-safe execution using a Mutex to prevent race conditions and double-counting.
+ * 4. Anomaly detection against impossible step spikes (e.g. sensor glitches or update baseline issues).
+ * 5. Consistent synchronization between Room database and the Home Screen widget.
  */
 class StepDeltaTracker(
     private val prefs: SharedPreferences,
@@ -30,6 +34,9 @@ class StepDeltaTracker(
     private val notificationHelper: com.example.stepcount.core.notification.StepNotificationHelper? = null,
     private val context: Context? = null
 ) {
+    // Mutex lock ensures only one sensor reading is processed at a time,
+    // avoiding race conditions between foreground service, background workers, and UI.
+    private val processMutex = Mutex()
 
     /**
      * Helper to get today's date in standard YYYY-MM-DD format.
@@ -40,29 +47,33 @@ class StepDeltaTracker(
 
     /**
      * Processes a fresh reading from the hardware step counter sensor.
-     * Computes the delta, saves the updated step count to Room database,
-     * and refreshes the Home Screen widget.
+     * Computes the delta, performs glitch/anomaly detection, saves the updated step count
+     * to Room database, and refreshes the Home Screen widget.
      *
      * @param currentHardwareSteps The raw cumulative step count from Sensor.TYPE_STEP_COUNTER.
      * @param todayDate Optional date string, defaults to today.
+     * @param currentTimeMillis Optional timestamp in milliseconds, defaults to System.currentTimeMillis().
      * @return The updated total steps for today.
      */
     suspend fun processHardwareReading(
         currentHardwareSteps: Long,
-        todayDate: String = getTodayDateString()
-    ): Long {
+        todayDate: String = getTodayDateString(),
+        currentTimeMillis: Long = System.currentTimeMillis()
+    ): Long = processMutex.withLock {
         val lastHardwareSteps = prefs.getLong(Constants.KEY_LAST_HARDWARE_COUNTER, -1L)
+        val lastTimestamp = prefs.getLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, -1L)
         val lastRecordedDate = prefs.getString(Constants.KEY_LAST_RECORDED_DATE, null)
 
         // Case 1: First time the sensor is ever read
         if (lastHardwareSteps < 0L) {
             prefs.edit()
                 .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, currentHardwareSteps)
+                .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, currentTimeMillis)
                 .putString(Constants.KEY_LAST_RECORDED_DATE, todayDate)
                 .apply()
 
             val existingRecord = stepRepository.getTodaySteps().firstOrNull()
-            return existingRecord?.steps ?: 0L
+            return@withLock existingRecord?.steps ?: 0L
         }
 
         // Case 2: Calculate the delta since our last sensor reading
@@ -78,6 +89,33 @@ class StepDeltaTracker(
         // Fetch current steps for today from local database
         val existingTodayRecord = stepRepository.getTodaySteps().firstOrNull()
         val currentTodaySteps = existingTodayRecord?.steps ?: 0L
+
+        // Case 3: Anomaly & Glitch Protection Filter
+        // Prevent phantom step spikes from corrupted baselines or hardware sensor glitches.
+        // For example, walking speed cannot physically exceed ~10-15 steps per second.
+        val elapsedSeconds = if (lastTimestamp > 0L) (currentTimeMillis - lastTimestamp) / 1000.0 else -1.0
+        val isAnomaly = when {
+            // Impossibly high jump (> 15,000 steps) within a short window (< 10 minutes)
+            delta > 15_000L && (elapsedSeconds in 0.0..600.0) -> true
+            // Rate check: cadence > 12 steps per second over any measurable elapsed time
+            elapsedSeconds in 1.0..60.0 && (delta / elapsedSeconds) > 12.0 -> true
+            else -> false
+        }
+
+        if (isAnomaly) {
+            android.util.Log.w(
+                "StepDeltaTracker",
+                "Step anomaly detected: delta=$delta, elapsed=${elapsedSeconds}s, currentRaw=$currentHardwareSteps. Discarding spike and re-baselining."
+            )
+            // Re-baseline without applying the corrupted delta to today's steps
+            prefs.edit()
+                .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, currentHardwareSteps)
+                .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, currentTimeMillis)
+                .putString(Constants.KEY_LAST_RECORDED_DATE, todayDate)
+                .apply()
+
+            return@withLock currentTodaySteps
+        }
 
         val updatedTodaySteps = if (lastRecordedDate != null && lastRecordedDate != todayDate) {
             // Midnight transition: last recorded reading was on a previous day.
@@ -95,9 +133,10 @@ class StepDeltaTracker(
         val activeGoal = existingTodayRecord?.goal ?: Constants.DEFAULT_DAILY_GOAL
         notificationHelper?.checkAndNotify(updatedTodaySteps, activeGoal, todayDate)
 
-        // Update preferences with latest hardware reading and date
+        // Update preferences with latest hardware reading, timestamp, and date
         prefs.edit()
             .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, currentHardwareSteps)
+            .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, currentTimeMillis)
             .putString(Constants.KEY_LAST_RECORDED_DATE, todayDate)
             .apply()
 
@@ -106,7 +145,7 @@ class StepDeltaTracker(
             TodayStepWidgetReceiver.notifyStepsUpdated(it)
         }
 
-        return updatedTodaySteps
+        return@withLock updatedTodaySteps
     }
 
     /**
@@ -116,6 +155,7 @@ class StepDeltaTracker(
     fun onDeviceRebooted() {
         prefs.edit()
             .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, 0L)
+            .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, System.currentTimeMillis())
             .apply()
     }
 }
