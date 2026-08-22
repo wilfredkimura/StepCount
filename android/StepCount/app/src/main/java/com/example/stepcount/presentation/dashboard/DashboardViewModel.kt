@@ -77,9 +77,6 @@ class DashboardViewModel(
 
     fun onStepCountUpdatedFromSensor(steps: Long) {
         _uiState.update { it.copy(liveSteps = steps) }
-        viewModelScope.launch {
-            recordStepDeltaUseCase(steps)
-        }
     }
 
     fun setFallbackSensorActive(isActive: Boolean) {
