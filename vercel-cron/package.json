@@ -1,0 +1,13 @@
+{
+  "name": "stepcount-keepalive-cron",
+  "version": "1.0.0",
+  "description": "Lightweight Vercel Cron service to keep StepCount FastAPI backend warm 24/7",
+  "type": "module",
+  "main": "api/cron.js",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "keywords": ["keepalive", "cron", "vercel", "fastapi", "stepcount"],
+  "author": "StepCount Team",
+  "license": "MIT"
+}
