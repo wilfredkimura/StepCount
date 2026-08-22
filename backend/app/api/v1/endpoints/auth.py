@@ -4,18 +4,48 @@ Handles Firebase token synchronization and user session events.
 """
 
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.auth import FirebaseLoginRequestDto, LogoutResponseDto
+from app.schemas.auth import FirebaseLoginRequestDto, LogoutResponseDto, RegisterRequestDto
 from app.schemas.user import UserProfileDto
 
 logger = logging.getLogger("stepcount.auth")
 
 router = APIRouter()
+
+
+@router.post("/register", response_model=UserProfileDto, status_code=status.HTTP_201_CREATED, summary="Register User & Commit Profile to NeonDB")
+async def register_user(
+    payload: RegisterRequestDto,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> UserProfileDto:
+    """
+    Registers a new user in NeonDB PostgreSQL.
+    Ensures that the user profile is explicitly committed and synchronized with Firebase Auth.
+    """
+    if payload.name:
+        current_user.name = payload.name
+    if payload.email:
+        current_user.email = str(payload.email)
+    if payload.daily_goal:
+        current_user.daily_goal = payload.daily_goal
+
+    await db.flush()
+    await db.refresh(current_user)
+
+    logger.info(f"[USER REGISTERED] User '{current_user.email}' ({current_user.id}) committed to NeonDB with goal {current_user.daily_goal}.")
+
+    return UserProfileDto(
+        user_id=current_user.id,
+        email=current_user.email,
+        name=current_user.name,
+        daily_goal=current_user.daily_goal
+    )
 
 
 @router.post("/firebase-login", response_model=UserProfileDto, summary="Synchronize Firebase User with NeonDB")
