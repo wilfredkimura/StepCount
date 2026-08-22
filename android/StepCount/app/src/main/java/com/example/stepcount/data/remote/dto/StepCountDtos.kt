@@ -12,6 +12,13 @@ data class FirebaseLoginRequestDto(
     @SerializedName("name") val name: String
 )
 
+// Request to register a new user in PostgreSQL backend
+data class RegisterRequestDto(
+    @SerializedName("email") val email: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("daily_goal") val dailyGoal: Int = 8000
+)
+
 // User Profile Response
 data class UserProfileDto(
     @SerializedName("user_id") val userId: String,
