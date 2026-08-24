@@ -47,7 +47,7 @@ class StepDeltaTracker(
 
     /**
      * Processes a fresh reading from the hardware step counter sensor.
-     * Computes the delta, performs glitch/anomaly detection, saves the updated step count
+     * Computes the delta, performs OEM-agnostic glitch/anomaly detection, saves the updated step count
      * to Room database, and refreshes the Home Screen widget.
      *
      * @param currentHardwareSteps The raw cumulative step count from Sensor.TYPE_STEP_COUNTER.
@@ -64,41 +64,80 @@ class StepDeltaTracker(
         val lastTimestamp = prefs.getLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, -1L)
         val lastRecordedDate = prefs.getString(Constants.KEY_LAST_RECORDED_DATE, null)
 
-        // Case 1: First time the sensor is ever read
+        // Fetch current steps for today from local database
+        val existingTodayRecord = stepRepository.getTodaySteps().firstOrNull()
+        val currentTodaySteps = existingTodayRecord?.steps ?: 0L
+
+        // OEM Protection: Ignore transient 0 readings from driver flushes on Redmi/Oppo
+        if (currentHardwareSteps <= 0L) {
+            if (lastHardwareSteps > 0L) {
+                android.util.Log.d("StepDeltaTracker", "Ignored transient 0 reading from sensor driver flush.")
+                return@withLock currentTodaySteps
+            } else {
+                // First initialization when counter is legitimately 0
+                prefs.edit()
+                    .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, 0L)
+                    .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, currentTimeMillis)
+                    .putString(Constants.KEY_LAST_RECORDED_DATE, todayDate)
+                    .commit()
+                return@withLock currentTodaySteps
+            }
+        }
+
+        // Case 1: First time the sensor is ever read or freshly re-baselined
         if (lastHardwareSteps < 0L) {
             prefs.edit()
                 .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, currentHardwareSteps)
                 .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, currentTimeMillis)
                 .putString(Constants.KEY_LAST_RECORDED_DATE, todayDate)
-                .apply()
+                .commit()
 
-            val existingRecord = stepRepository.getTodaySteps().firstOrNull()
-            return@withLock existingRecord?.steps ?: 0L
+            return@withLock currentTodaySteps
         }
 
-        // Case 2: Calculate the delta since our last sensor reading
-        val delta = if (currentHardwareSteps >= lastHardwareSteps) {
-            // Normal case: counter has incremented
-            currentHardwareSteps - lastHardwareSteps
+        // Case 2: Calculate delta with OEM driver drop protection
+        val delta: Long
+        if (currentHardwareSteps < lastHardwareSteps) {
+            // Redmi / Oppo / Device Reboot Case:
+            // Hardware counter decreased (e.g. sensor hub flush, driver reset, or phone restart).
+            // Never treat the entire raw reading as a delta.
+            android.util.Log.w(
+                "StepDeltaTracker",
+                "Hardware counter decreased from $lastHardwareSteps to $currentHardwareSteps (OEM driver reset or reboot). Re-baselining safely."
+            )
+            // If phone just rebooted to a small count (e.g. 1-300 steps), attribute small walk delta, otherwise 0
+            delta = if (currentHardwareSteps in 1L..300L) currentHardwareSteps else 0L
+
+            prefs.edit()
+                .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, currentHardwareSteps)
+                .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, currentTimeMillis)
+                .putString(Constants.KEY_LAST_RECORDED_DATE, todayDate)
+                .commit()
+
+            if (delta == 0L) {
+                return@withLock currentTodaySteps
+            }
         } else {
-            // Reboot case: device was restarted and counter reset to 0
-            // currentHardwareSteps represents all steps taken since the reboot
-            currentHardwareSteps
+            // Normal case: counter has incremented
+            delta = currentHardwareSteps - lastHardwareSteps
         }
 
-        // Fetch current steps for today from local database
-        val existingTodayRecord = stepRepository.getTodaySteps().firstOrNull()
-        val currentTodaySteps = existingTodayRecord?.steps ?: 0L
+        // Case 3: Universal Physical Speed & Cadence Anomaly Filter
+        // Maximum human walking/sprinting cadence is 5.0 steps/sec (~300 steps/min).
+        // Any jump exceeding this physical limit or jumping by > 3,000 steps in a single event is rejected.
+        val elapsedSeconds = if (lastTimestamp > 0L) {
+            maxOf(0.1, (currentTimeMillis - lastTimestamp) / 1000.0)
+        } else {
+            -1.0
+        }
 
-        // Case 3: Anomaly & Glitch Protection Filter
-        // Prevent phantom step spikes from corrupted baselines or hardware sensor glitches.
-        // For example, walking speed cannot physically exceed ~10-15 steps per second.
-        val elapsedSeconds = if (lastTimestamp > 0L) (currentTimeMillis - lastTimestamp) / 1000.0 else -1.0
         val isAnomaly = when {
-            // Impossibly high jump (> 15,000 steps) within a short window (< 10 minutes)
-            delta > 15_000L && (elapsedSeconds in 0.0..600.0) -> true
-            // Rate check: cadence > 12 steps per second over any measurable elapsed time
-            elapsedSeconds in 1.0..60.0 && (delta / elapsedSeconds) > 12.0 -> true
+            // Delta exceeds max human physical cadence over the elapsed time window (5 steps/sec), with a minimum buffer of 1,000 steps for sensor hub batches
+            elapsedSeconds > 0.0 && delta > maxOf(1_000L, (elapsedSeconds * 5.0).toLong()) -> true
+            // Single reading jump > 15,000 steps in a single event regardless of window
+            delta > 15_000L -> true
+            // Timestamp is invalid but delta is abnormally high
+            elapsedSeconds <= 0.0 && delta > 1_000L -> true
             else -> false
         }
 
@@ -112,7 +151,7 @@ class StepDeltaTracker(
                 .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, currentHardwareSteps)
                 .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, currentTimeMillis)
                 .putString(Constants.KEY_LAST_RECORDED_DATE, todayDate)
-                .apply()
+                .commit()
 
             return@withLock currentTodaySteps
         }
@@ -138,7 +177,7 @@ class StepDeltaTracker(
             .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, currentHardwareSteps)
             .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, currentTimeMillis)
             .putString(Constants.KEY_LAST_RECORDED_DATE, todayDate)
-            .apply()
+            .commit()
 
         // Refresh the Home Screen Widget if context is available
         context?.let {
@@ -150,12 +189,12 @@ class StepDeltaTracker(
 
     /**
      * Resets the hardware baseline upon receiving device boot broadcast.
-     * Tells the tracker that the hardware counter will now start from 0.
+     * Tells the tracker to cleanly re-sync from the next hardware reading.
      */
     fun onDeviceRebooted() {
         prefs.edit()
-            .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, 0L)
+            .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, -1L)
             .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, System.currentTimeMillis())
-            .apply()
+            .commit()
     }
 }
