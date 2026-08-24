@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <!-- Feature declaration for hardware step sensor (not required so app can run with fallback) -->
     <uses-feature
@@ -67,6 +70,17 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWEROFF" />
             </intent-filter>
         </receiver>
+
+        <!-- 24/7 Persistent Foreground Step Tracking Service -->
+        <service
+            android:name=".sensor.StepForegroundService"
+            android:foregroundServiceType="health"
+            android:exported="false" />
+
+        <!-- Daily Midnight Step Rollover Receiver -->
+        <receiver
+            android:name=".sensor.MidnightStepRolloverReceiver"
+            android:exported="false" />
     </application>
 
 

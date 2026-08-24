@@ -6,6 +6,9 @@ package com.example.stepcount.presentation.settings
 data class SettingsUiState(
     val isDarkMode: Boolean = false,
     val isKilometers: Boolean = true,
+    val isNotificationsEnabled: Boolean = true,
+    val isPersistentTrackingEnabled: Boolean = true,
+    val milestonePercentage: Int = 50,
     val isSyncingNow: Boolean = false,
     val syncSuccessMessage: String? = null,
     val showClearHistoryDialog: Boolean = false,

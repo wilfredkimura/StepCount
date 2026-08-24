@@ -7,6 +7,7 @@ import com.example.stepcount.data.local.entity.UserProfileEntity
 import com.example.stepcount.data.remote.api.StepCountApiService
 import com.example.stepcount.data.remote.auth.FirebaseAuthService
 import com.example.stepcount.data.remote.dto.FirebaseLoginRequestDto
+import com.example.stepcount.data.remote.dto.RegisterRequestDto
 import com.example.stepcount.domain.model.Resource
 import com.example.stepcount.domain.model.UserProfile
 import com.example.stepcount.domain.repository.AuthRepository
@@ -44,18 +45,18 @@ class AuthRepositoryImpl(
 
     override suspend fun register(email: String, password: String, name: String): Resource<UserProfile> = withContext(Dispatchers.IO) {
         try {
+            // 1. Create account in Firebase Auth
             val userId = authService.register(email, password, name)
             var profileEntity = UserProfileEntity(
                 userId = userId,
                 email = email,
-                name = name
+                name = name,
+                dailyGoal = 8000
             )
-            // Save locally in Room first
-            userProfileDao.upsertUserProfile(profileEntity)
 
-            // Synchronize with backend server if online and store remote profile attributes
+            // 2. Explicitly provision user in PostgreSQL backend database
             try {
-                val response = apiService.syncUserWithBackend(FirebaseLoginRequestDto(email, name))
+                val response = apiService.registerUserWithBackend(RegisterRequestDto(email, name, 8000))
                 if (response.isSuccessful) {
                     val remoteProfile = response.body()
                     if (remoteProfile != null) {
@@ -65,13 +66,15 @@ class AuthRepositoryImpl(
                             name = if (remoteProfile.name.isNotBlank()) remoteProfile.name else name,
                             dailyGoal = remoteProfile.dailyGoal
                         )
-                        userProfileDao.upsertUserProfile(profileEntity)
                     }
                 }
             } catch (e: Exception) {
-                // Offline fallback: continue using local profile
+                // Offline fallback: log and use local profile
+                android.util.Log.w("AuthRepositoryImpl", "Could not reach backend during register, proceeding with local profile", e)
             }
 
+            // Save confirmed profile in local Room database
+            userProfileDao.upsertUserProfile(profileEntity)
             Resource.Success(UserProfile(profileEntity.userId, profileEntity.email, profileEntity.name, profileEntity.dailyGoal))
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Registration failed")
@@ -80,38 +83,21 @@ class AuthRepositoryImpl(
 
     override suspend fun login(email: String, password: String): Resource<UserProfile> = withContext(Dispatchers.IO) {
         try {
+            // 1. Authenticate directly with Firebase Auth (no remote DB hit needed for login)
             val userId = authService.login(email, password)
             val localProfile = userProfileDao.getUserProfileOnce(userId)
 
             val name = localProfile?.name ?: email.substringBefore("@")
             val goal = localProfile?.dailyGoal ?: 8000
 
-            var profileEntity = UserProfileEntity(
+            val profileEntity = UserProfileEntity(
                 userId = userId,
                 email = email,
                 name = name,
                 dailyGoal = goal
             )
+            // Persist/update local Room database
             userProfileDao.upsertUserProfile(profileEntity)
-
-            // Synchronize with backend server and update local Room database
-            try {
-                val response = apiService.syncUserWithBackend(FirebaseLoginRequestDto(email, name))
-                if (response.isSuccessful) {
-                    val remoteProfile = response.body()
-                    if (remoteProfile != null) {
-                        profileEntity = UserProfileEntity(
-                            userId = if (remoteProfile.userId.isNotBlank()) remoteProfile.userId else userId,
-                            email = if (remoteProfile.email.isNotBlank()) remoteProfile.email else email,
-                            name = if (remoteProfile.name.isNotBlank()) remoteProfile.name else name,
-                            dailyGoal = remoteProfile.dailyGoal
-                        )
-                        userProfileDao.upsertUserProfile(profileEntity)
-                    }
-                }
-            } catch (e: Exception) {
-                // Continue offline
-            }
 
             Resource.Success(UserProfile(profileEntity.userId, profileEntity.email, profileEntity.name, profileEntity.dailyGoal))
         } catch (e: Exception) {

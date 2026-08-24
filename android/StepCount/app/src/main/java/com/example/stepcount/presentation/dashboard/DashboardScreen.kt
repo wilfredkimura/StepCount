@@ -111,6 +111,15 @@ fun DashboardScreen(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (state.streakInfo.currentStreak > 0) {
+                        StatusBadge(
+                            text = "${state.streakInfo.currentStreak} Day Streak",
+                            icon = Icons.Rounded.LocalFireDepartment,
+                            containerColor = MetricCaloriesColor.copy(alpha = 0.15f),
+                            contentColor = MetricCaloriesColor
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                     if (state.isGuestMode) {
                         StatusBadge(
                             text = "Guest",
@@ -148,15 +157,25 @@ fun DashboardScreen(
                             imageVector = Icons.Rounded.EmojiEvents,
                             contentDescription = null,
                             tint = GoalMetGreen,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Daily Goal Reached! Great job!",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = GoalMetGreen,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Column {
+                            Text(
+                                text = "Daily Goal Smashed! (${state.liveSteps} / ${state.dailyGoal})",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = GoalMetGreen,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (state.streakInfo.currentStreak > 0) {
+                                Text(
+                                    text = "🔥 Active Streak: ${state.streakInfo.currentStreak} Day(s)!",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = GoalMetGreen,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))

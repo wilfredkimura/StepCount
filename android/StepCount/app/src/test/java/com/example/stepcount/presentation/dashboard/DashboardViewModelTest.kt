@@ -34,6 +34,7 @@ class DashboardViewModelTest {
     private lateinit var getTodayStepsUseCase: GetTodayStepsUseCase
     private lateinit var recordStepDeltaUseCase: RecordStepDeltaUseCase
     private lateinit var getMotivationalQuoteUseCase: GetMotivationalQuoteUseCase
+    private lateinit var getStreakUseCase: com.example.stepcount.domain.usecase.GetStreakUseCase
     private lateinit var authRepository: AuthRepository
     private lateinit var viewModel: DashboardViewModel
 
@@ -43,6 +44,7 @@ class DashboardViewModelTest {
         getTodayStepsUseCase = mockk(relaxed = true)
         recordStepDeltaUseCase = mockk(relaxed = true)
         getMotivationalQuoteUseCase = mockk(relaxed = true)
+        getStreakUseCase = mockk(relaxed = true)
         authRepository = mockk(relaxed = true)
 
         every { authRepository.getCurrentUser() } returns flowOf(
@@ -54,11 +56,15 @@ class DashboardViewModelTest {
         coEvery { getMotivationalQuoteUseCase.invoke() } returns Resource.Success(
             MotivationalQuote("Keep walking!", "Coach")
         )
+        every { getStreakUseCase.invoke() } returns flowOf(
+            com.example.stepcount.domain.model.StreakInfo(5, 10, 30)
+        )
 
         viewModel = DashboardViewModel(
             getTodayStepsUseCase,
             recordStepDeltaUseCase,
             getMotivationalQuoteUseCase,
+            getStreakUseCase,
             authRepository
         )
     }
@@ -80,14 +86,11 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun onStepCountUpdatedFromSensor_triggersRecordUseCase() = runTest {
-        coEvery { recordStepDeltaUseCase.invoke(7000L) } returns Resource.Success(Unit)
-
+    fun onStepCountUpdatedFromSensor_updatesLiveStepsState() = runTest {
         viewModel.onStepCountUpdatedFromSensor(7000L)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals(7000L, state.liveSteps)
-        coVerify { recordStepDeltaUseCase.invoke(7000L) }
     }
 }

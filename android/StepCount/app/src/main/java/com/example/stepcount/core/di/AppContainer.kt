@@ -34,12 +34,22 @@ class AppContainer(context: Context) {
         context = context
     )
 
+    val motivationRepository: MotivationRepository = MotivationRepositoryImpl(
+        apiService = apiService
+    )
+
+    val stepNotificationHelper = com.example.stepcount.core.notification.StepNotificationHelper(
+        context = context,
+        prefs = context.getSharedPreferences(com.example.stepcount.core.util.Constants.PREFS_NAME, Context.MODE_PRIVATE),
+        motivationRepository = motivationRepository
+    )
+
     val stepDeltaTracker = com.example.stepcount.sensor.StepDeltaTracker(
         prefs = context.getSharedPreferences(com.example.stepcount.core.util.Constants.PREFS_NAME, Context.MODE_PRIVATE),
         stepRepository = stepRepository,
+        notificationHelper = stepNotificationHelper,
         context = context
     )
-
 
     val leaderboardRepository: LeaderboardRepository = LeaderboardRepositoryImpl(
         authService = authService,
@@ -47,15 +57,12 @@ class AppContainer(context: Context) {
         leaderboardCacheDao = database.leaderboardCacheDao()
     )
 
-    val motivationRepository: MotivationRepository = MotivationRepositoryImpl(
-        apiService = apiService
-    )
-
     // Use Cases
     val getTodayStepsUseCase = GetTodayStepsUseCase(stepRepository)
     val recordStepDeltaUseCase = RecordStepDeltaUseCase(stepRepository)
     val getStepHistoryUseCase = GetStepHistoryUseCase(stepRepository)
     val deleteStepRecordUseCase = DeleteStepRecordUseCase(stepRepository)
+    val getStreakUseCase = GetStreakUseCase(stepRepository)
     val getLeaderboardUseCase = GetLeaderboardUseCase(leaderboardRepository)
     val getMotivationalQuoteUseCase = GetMotivationalQuoteUseCase(motivationRepository)
     val syncPendingStepsUseCase = SyncPendingStepsUseCase(stepRepository)

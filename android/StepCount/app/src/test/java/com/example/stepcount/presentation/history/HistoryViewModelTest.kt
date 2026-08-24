@@ -2,8 +2,10 @@ package com.example.stepcount.presentation.history
 
 import com.example.stepcount.domain.model.DailyStepRecord
 import com.example.stepcount.domain.model.Resource
+import com.example.stepcount.domain.model.StreakInfo
 import com.example.stepcount.domain.usecase.DeleteStepRecordUseCase
 import com.example.stepcount.domain.usecase.GetStepHistoryUseCase
+import com.example.stepcount.domain.usecase.GetStreakUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -21,7 +23,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Unit tests verifying HistoryViewModel filtering and deletion flows.
+ * Unit tests verifying HistoryViewModel filtering, streaks, and deletion flows.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModelTest {
@@ -29,6 +31,7 @@ class HistoryViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var getStepHistoryUseCase: GetStepHistoryUseCase
     private lateinit var deleteStepRecordUseCase: DeleteStepRecordUseCase
+    private lateinit var getStreakUseCase: GetStreakUseCase
     private lateinit var viewModel: HistoryViewModel
 
     private val mockRecords = listOf(
@@ -42,10 +45,12 @@ class HistoryViewModelTest {
         Dispatchers.setMain(testDispatcher)
         getStepHistoryUseCase = mockk(relaxed = true)
         deleteStepRecordUseCase = mockk(relaxed = true)
+        getStreakUseCase = mockk(relaxed = true)
 
         every { getStepHistoryUseCase.invoke("all") } returns flowOf(mockRecords)
+        every { getStreakUseCase.invoke() } returns flowOf(StreakInfo(currentStreak = 2, bestStreak = 5, totalGoalDays = 12))
 
-        viewModel = HistoryViewModel(getStepHistoryUseCase, deleteStepRecordUseCase)
+        viewModel = HistoryViewModel(getStepHistoryUseCase, deleteStepRecordUseCase, getStreakUseCase)
     }
 
     @After

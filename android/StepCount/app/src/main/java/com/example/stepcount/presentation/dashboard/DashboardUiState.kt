@@ -2,6 +2,7 @@ package com.example.stepcount.presentation.dashboard
 
 import com.example.stepcount.domain.model.DailyStepRecord
 import com.example.stepcount.domain.model.MotivationalQuote
+import com.example.stepcount.domain.model.StreakInfo
 
 /**
  * UI State for the Dashboard screen.
@@ -11,6 +12,7 @@ data class DashboardUiState(
     val liveSteps: Long = 0L,
     val dailyGoal: Int = 8000,
     val motivationalQuote: MotivationalQuote? = null,
+    val streakInfo: StreakInfo = StreakInfo(),
     val isGuestMode: Boolean = false,
     val isFallbackSensorActive: Boolean = false,
     val isLoading: Boolean = false,

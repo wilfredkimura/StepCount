@@ -23,6 +23,25 @@ async def test_root_endpoint(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_register_user_success(client: AsyncClient):
+    """Verifies that registration endpoint provisions user in database and returns 201 Created."""
+    headers = {"Authorization": "Bearer test_token_registered_user_101"}
+    payload = {
+        "email": "athlete@example.com",
+        "name": "Pro Athlete",
+        "daily_goal": 12000
+    }
+
+    response = await client.post("/api/auth/register", json=payload, headers=headers)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["user_id"] == "registered_user_101"
+    assert data["email"] == "athlete@example.com"
+    assert data["name"] == "Pro Athlete"
+    assert data["daily_goal"] == 12000
+
+
+@pytest.mark.asyncio
 async def test_firebase_login_success(client: AsyncClient):
     """Verifies that a valid token provisions and returns user profile."""
     headers = {"Authorization": "Bearer test_token_new_user_999"}

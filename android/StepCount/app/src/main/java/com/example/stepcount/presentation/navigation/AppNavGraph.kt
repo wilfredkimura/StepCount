@@ -80,6 +80,7 @@ fun AppNavGraph(
                     getTodayStepsUseCase = container.getTodayStepsUseCase,
                     recordStepDeltaUseCase = container.recordStepDeltaUseCase,
                     getMotivationalQuoteUseCase = container.getMotivationalQuoteUseCase,
+                    getStreakUseCase = container.getStreakUseCase,
                     authRepository = container.authRepository
                 )
             }
@@ -104,7 +105,8 @@ fun AppNavGraph(
             val historyViewModel: HistoryViewModel = remember {
                 HistoryViewModel(
                     getStepHistoryUseCase = container.getStepHistoryUseCase,
-                    deleteStepRecordUseCase = container.deleteStepRecordUseCase
+                    deleteStepRecordUseCase = container.deleteStepRecordUseCase,
+                    getStreakUseCase = container.getStreakUseCase
                 )
             }
             HistoryScreen(
@@ -144,7 +146,8 @@ fun AppNavGraph(
                 ProfileViewModel(
                     authRepository = container.authRepository,
                     stepRepository = container.stepRepository,
-                    updateDailyGoalUseCase = container.updateDailyGoalUseCase
+                    updateDailyGoalUseCase = container.updateDailyGoalUseCase,
+                    getStreakUseCase = container.getStreakUseCase
                 )
             }
             ProfileScreen(
@@ -169,7 +172,9 @@ fun AppNavGraph(
                 SettingsViewModel(
                     authRepository = container.authRepository,
                     stepRepository = container.stepRepository,
-                    syncPendingStepsUseCase = container.syncPendingStepsUseCase
+                    syncPendingStepsUseCase = container.syncPendingStepsUseCase,
+                    notificationHelper = container.stepNotificationHelper,
+                    prefs = context.getSharedPreferences(com.example.stepcount.core.util.Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
                 )
             }
             SettingsScreen(

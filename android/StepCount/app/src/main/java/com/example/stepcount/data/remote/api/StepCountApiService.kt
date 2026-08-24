@@ -10,6 +10,14 @@ import retrofit2.http.*
 interface StepCountApiService {
 
     /**
+     * Registers a new Firebase-authenticated user explicitly in the PostgreSQL database.
+     */
+    @POST("auth/register")
+    suspend fun registerUserWithBackend(
+        @Body request: RegisterRequestDto
+    ): Response<UserProfileDto>
+
+    /**
      * Synchronizes a Firebase-authenticated user with the PostgreSQL database.
      */
     @POST("auth/firebase-login")

@@ -60,14 +60,18 @@ class StepDeltaTrackerTest {
 
     @Test
     fun `midnight crossover allocates delta to new day record without losing morning steps`() = runBlocking {
-        // Day 1: reading is at 10,000 steps
-        tracker.processHardwareReading(currentHardwareSteps = 10000L, todayDate = "2026-08-14")
+        // Day 1 at 11:00 PM (timestamp: 1,000,000): reading is at 10,000 steps
+        tracker.processHardwareReading(currentHardwareSteps = 10000L, todayDate = "2026-08-14", currentTimeMillis = 1000000L)
 
-        // Day 2 morning: user walked 1,200 steps before opening app (counter is at 11,200)
+        // Day 2 morning at 7:00 AM (8 hours / 28,800,000ms later): user walked 1,200 steps before opening app (counter is at 11,200)
         // Switch fake repository to report no steps for new day 2026-08-15
         fakeRepository.setTodayRecord(null)
 
-        val day2Steps = tracker.processHardwareReading(currentHardwareSteps = 11200L, todayDate = "2026-08-15")
+        val day2Steps = tracker.processHardwareReading(
+            currentHardwareSteps = 11200L,
+            todayDate = "2026-08-15",
+            currentTimeMillis = 29800000L
+        )
 
         // Delta of 1,200 is preserved and assigned to today
         assertEquals(1200L, day2Steps)
@@ -79,11 +83,11 @@ class StepDeltaTrackerTest {
     @Test
     fun `device reboot resets hardware counter and continues tracking from zero`() = runBlocking {
         // Establish baseline before reboot at 8,000
-        tracker.processHardwareReading(currentHardwareSteps = 8000L, todayDate = "2026-08-15")
+        tracker.processHardwareReading(currentHardwareSteps = 8000L, todayDate = "2026-08-15", currentTimeMillis = 1000000L)
         fakeRepository.setTodayRecord(DailyStepRecord(id = 1, userId = "u1", date = "2026-08-15", steps = 2000L, goal = 8000, isSynced = true))
 
-        // Phone reboots! Hardware counter starts at 0, user walks 150 steps
-        val stepsAfterReboot = tracker.processHardwareReading(currentHardwareSteps = 150L, todayDate = "2026-08-15")
+        // Phone reboots! Hardware counter starts at 0, user walks 150 steps (300 seconds later)
+        val stepsAfterReboot = tracker.processHardwareReading(currentHardwareSteps = 150L, todayDate = "2026-08-15", currentTimeMillis = 1300000L)
 
         // Existing 2000 steps + 150 new steps = 2150 total steps
         assertEquals(2150L, stepsAfterReboot)
@@ -99,6 +103,150 @@ class StepDeltaTrackerTest {
         val result = tracker.processHardwareReading(currentHardwareSteps = 6000L, todayDate = "2026-08-15")
 
         assertEquals(500L, result)
+    }
+
+    @Test
+    fun `app update preserves baseline and correctly adds small walking delta during update downtime without phantom steps`() = runBlocking {
+        // App was tracking before update at 85,000 raw steps with 3,500 steps today
+        fakePrefs.edit()
+            .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, 85000L)
+            .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, 1000000L)
+            .putString(Constants.KEY_LAST_RECORDED_DATE, "2026-08-15")
+            .apply()
+        fakeRepository.setTodayRecord(DailyStepRecord(id = 1, userId = "u1", date = "2026-08-15", steps = 3500L, goal = 8000, isSynced = true))
+
+        // New APK version installed: user walked 30 steps during update downtime (counter at 85,030)
+        // 60 seconds elapsed
+        val updatedSteps = tracker.processHardwareReading(
+            currentHardwareSteps = 85030L,
+            todayDate = "2026-08-15",
+            currentTimeMillis = 1060000L
+        )
+
+        // Today's steps should be 3,500 + 30 = 3,530 (NOT 85,030 phantom steps!)
+        assertEquals(3530L, updatedSteps)
+        assertEquals(85030L, fakePrefs.getLong(Constants.KEY_LAST_HARDWARE_COUNTER, -1L))
+        assertEquals(3530L, fakeRepository.lastSavedSteps)
+    }
+
+    @Test
+    fun `anomaly detection discards impossibly huge step jumps within short window and re-baselines safely`() = runBlocking {
+        // Baseline established at 1,000 steps with 500 today steps
+        fakePrefs.edit()
+            .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, 1000L)
+            .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, 1000000L)
+            .putString(Constants.KEY_LAST_RECORDED_DATE, "2026-08-15")
+            .apply()
+        fakeRepository.setTodayRecord(DailyStepRecord(id = 1, userId = "u1", date = "2026-08-15", steps = 500L, goal = 8000, isSynced = true))
+
+        // 10 seconds later, hardware sensor glitches or returns a massive corrupted reading (+50,000 steps)
+        val result = tracker.processHardwareReading(
+            currentHardwareSteps = 51000L,
+            todayDate = "2026-08-15",
+            currentTimeMillis = 1010000L
+        )
+
+        // Corrupted spike should be discarded, keeping today's steps at 500
+        assertEquals(500L, result)
+        // Baseline safely updated to 51,000 so subsequent real steps increment from there
+        assertEquals(51000L, fakePrefs.getLong(Constants.KEY_LAST_HARDWARE_COUNTER, -1L))
+    }
+
+    @Test
+    fun `concurrent calls to processHardwareReading produce exact step count without double-counting`() = runBlocking {
+        // Initial reading at 2,000
+        fakePrefs.edit()
+            .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, 2000L)
+            .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, 1000000L)
+            .putString(Constants.KEY_LAST_RECORDED_DATE, "2026-08-15")
+            .apply()
+        fakeRepository.setTodayRecord(DailyStepRecord(id = 1, userId = "u1", date = "2026-08-15", steps = 100L, goal = 8000, isSynced = true))
+
+        // First call processes reading at 2,050 (+50 steps)
+        val firstResult = tracker.processHardwareReading(
+            currentHardwareSteps = 2050L,
+            todayDate = "2026-08-15",
+            currentTimeMillis = 1020000L
+        )
+        // Second call (e.g. from UI listener or service) processes the same 2,050 reading
+        val secondResult = tracker.processHardwareReading(
+            currentHardwareSteps = 2050L,
+            todayDate = "2026-08-15",
+            currentTimeMillis = 1020005L
+        )
+
+        assertEquals(150L, firstResult)
+        assertEquals(150L, secondResult)
+        assertEquals(150L, fakeRepository.lastSavedSteps)
+    }
+
+    @Test
+    fun `oem transient zero reading from driver flush is ignored when baseline exists`() = runBlocking {
+        // Established baseline on Redmi/Oppo at 4,172,000 with 200 today steps
+        fakePrefs.edit()
+            .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, 4172000L)
+            .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, 1000000L)
+            .putString(Constants.KEY_LAST_RECORDED_DATE, "2026-08-15")
+            .apply()
+        fakeRepository.setTodayRecord(DailyStepRecord(id = 1, userId = "u1", date = "2026-08-15", steps = 200L, goal = 8000, isSynced = true))
+
+        // Sensor hub deep sleep emits a transient 0 reading
+        val result = tracker.processHardwareReading(
+            currentHardwareSteps = 0L,
+            todayDate = "2026-08-15",
+            currentTimeMillis = 1010000L
+        )
+
+        // Today's steps remain at 200 without being corrupted
+        assertEquals(200L, result)
+        // Baseline remains intact
+        assertEquals(4172000L, fakePrefs.getLong(Constants.KEY_LAST_HARDWARE_COUNTER, -1L))
+    }
+
+    @Test
+    fun `oem driver drop to lower value does not add raw counter as delta and rebaselines safely`() = runBlocking {
+        // Baseline established at 4,172,954
+        fakePrefs.edit()
+            .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, 4172954L)
+            .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, 1000000L)
+            .putString(Constants.KEY_LAST_RECORDED_DATE, "2026-08-15")
+            .apply()
+        fakeRepository.setTodayRecord(DailyStepRecord(id = 1, userId = "u1", date = "2026-08-15", steps = 200L, goal = 8000, isSynced = true))
+
+        // Sensor hub driver drops to 160,240
+        val result = tracker.processHardwareReading(
+            currentHardwareSteps = 160240L,
+            todayDate = "2026-08-15",
+            currentTimeMillis = 1050000L
+        )
+
+        // Should NOT add 160,240 to today's steps (must stay 200)
+        assertEquals(200L, result)
+        // Baseline re-aligned to 160,240
+        assertEquals(160240L, fakePrefs.getLong(Constants.KEY_LAST_HARDWARE_COUNTER, -1L))
+    }
+
+    @Test
+    fun `long idle window of 87 minutes rejects 4 million step spike and preserves today steps`() = runBlocking {
+        // App at 160,240 with 200 today steps at 6:50 PM
+        fakePrefs.edit()
+            .putLong(Constants.KEY_LAST_HARDWARE_COUNTER, 160240L)
+            .putLong(Constants.KEY_LAST_HARDWARE_TIMESTAMP, 1000000L)
+            .putString(Constants.KEY_LAST_RECORDED_DATE, "2026-08-15")
+            .apply()
+        fakeRepository.setTodayRecord(DailyStepRecord(id = 1, userId = "u1", date = "2026-08-15", steps = 200L, goal = 8000, isSynced = true))
+
+        // 87 minutes (5,220,000 ms) later at 8:17 PM, sensor restores 4,172,954 (+4,012,714 jump)
+        val result = tracker.processHardwareReading(
+            currentHardwareSteps = 4172954L,
+            todayDate = "2026-08-15",
+            currentTimeMillis = 6220000L
+        )
+
+        // Spurious 4 million jump MUST be rejected, keeping today's steps at 200
+        assertEquals(200L, result)
+        // Baseline safely updated to 4,172,954
+        assertEquals(4172954L, fakePrefs.getLong(Constants.KEY_LAST_HARDWARE_COUNTER, -1L))
     }
 }
 

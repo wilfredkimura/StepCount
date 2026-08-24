@@ -11,6 +11,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.3] - 2026-08-24
+
+### Added
+- **OEM-Specific Sensor Hub & Driver Protection (`StepDeltaTracker`):** Added specialized filtering to protect against deep-sleep driver flushes on Redmi (MIUI/HyperOS) and Oppo (ColorOS) devices, discarding transient 0 readings and preventing uncalibrated sensor resets from triggering phantom step spikes.
+- **Universal Physical Cadence & Anomaly Filter:** Replaced narrow time-window anomaly checks with a universal human speed limit ($5.0\text{ steps/sec}$ or max $3,000\text{ steps}$ per event across all elapsed time windows), preventing multi-million step jumps after extended idle intervals.
+- **Atomic Preferences Commits:** Switched to synchronous `.commit()` across all hardware baseline updates to eliminate multi-threaded state race conditions between foreground services, workers, and UI listeners.
+- **Explicit User Registration Endpoint (`POST /api/v1/auth/register`):** FastAPI backend endpoint that creates and commits user profiles to NeonDB PostgreSQL upon registration, returning HTTP 201 Created with verified user profile data.
+- **Guaranteed Registration Provisioning on Android:** Updated `AuthRepositoryImpl.register()` to explicitly call `POST /api/v1/auth/register` and await PostgreSQL database confirmation before completing registration, preventing orphaned Firebase accounts.
+- **Lightweight Firebase-Only Login on Android:** Optimized `AuthRepositoryImpl.login()` to authenticate directly with Firebase Auth without blocking on remote database requests, ensuring instant logins even on cold backend instances.
+- **Vercel Keep-Alive Cron Service (`vercel-cron/`):** Lightweight serverless cron project running every 10 minutes to keep the FastAPI backend on Render awake 24/7.
+
+### Fixed
+- **Driver Drop "Reboot" Assumption Bug:** Resolved issue where sensor hub driver drops to a lower reading were incorrectly treated as phone restarts and added as full raw deltas to today's step count.
+- **First-Run Phantom Delta:** Guaranteed that first sensor readings and fresh installs never calculate an initial delta, adopting the hardware counter as a clean zero-baseline.
+
+### Changed
+- **Version Increment:** Bumped Android application version to `1.3.3` (`versionCode = 9`).
+
+## [1.3.2] - 2026-08-22
+
+### Added
+- **Anomaly & Glitch Protection Filter (`StepDeltaTracker`):** Added velocity and plausibility validation using hardware reading timestamp tracking (`KEY_LAST_HARDWARE_TIMESTAMP`) to discard impossible step spikes (>15,000 steps jump within short windows or abnormal >12 steps/sec cadence) and safely re-baseline without corrupting daily history.
+- **Dedicated Application Update Handler (`BootAndShutdownReceiver`):** Added `handleAppUpdated` to capture steps walked during APK update downtime, restart 24/7 background tracking services, and refresh the Home Screen widget while keeping the cumulative baseline intact.
+- **Comprehensive Unit Tests (`StepDeltaTrackerTest`):** Added test coverage for app update baseline preservation, anomaly rejection, and concurrent reading synchronization.
+
+### Fixed
+- **Phantom Steps on App Updates / Package Replacement:** Resolved critical bug in `BootAndShutdownReceiver` where installing an updated version triggered `ACTION_MY_PACKAGE_REPLACED` and wiped the hardware counter baseline to `0L`, generating thousands of made-up steps.
+- **Step Double-Counting from Concurrent Listeners:** Resolved race conditions between the background foreground service, UI listeners, and periodic workers by adding coroutine `Mutex` serialization in `StepDeltaTracker` and removing redundant database writes from `DashboardViewModel`.
+
+### Changed
+- **Version Increment:** Bumped Android application version to `1.3.2` (`versionCode = 8`).
+
+---
+
+## [1.3.1] - 2026-08-20
+
+### Added
+- **24/7 Persistent Background Step Tracking (`StepForegroundService`):** Background Foreground Service running with `START_STICKY` and `FOREGROUND_SERVICE_TYPE_HEALTH` on Android 14+ that keeps hardware sensors continuously active in the background with a low-priority, silent live step counter notification in the status bar.
+- **Automated Daily Midnight Rollover Engine (`MidnightStepRolloverReceiver`):** Exact midnight alarm (`AlarmManager.setExactAndAllowWhileIdle`) firing daily at `00:00:00` to finalize each day's step tally into Room database and reset today's baseline to 0, ensuring that users who only open the app once a week have full, accurate day-by-day history recorded.
+- **Dedicated 24x24dp Monochrome Notification Asset (`ic_notification.xml`):** Pure white vector drawable designed for system notifications and status bar icons.
+- **Background Tracking & Battery Optimization Controls in Settings:** Toggle for 24/7 background tracking and shortcut button guiding users to exempt StepCount from aggressive OEM battery savers (Samsung, Xiaomi, etc.).
+
+### Fixed
+- **Notification Crash on Test Notification Dispatch:** Resolved app crash caused by passing multi-layered adaptive icon drawables to `NotificationCompat.Builder.setSmallIcon()` by replacing it with a compliant 24dp monochrome icon and adding global exception safety.
+- **Unattended Multi-Day Step Loss:** Resolved issue where steps walked over multiple days without opening the app were missed or attributed only to the current day upon opening.
+
+### Changed
+- **Version Increment:** Bumped Android application version to `1.3.1` (`versionCode = 7`).
+
+---
+
+## [1.3.0] - 2026-08-20
+
+### Added
+- **Goal Completion & Custom Milestone Notifications (`StepNotificationHelper`):** High-priority Android notification channel (`stepcount_goals_channel`) alerting users upon reaching customizable milestone progress points (such as 50%, 65%, 75%, 80%) and celebrating 100% daily goal completion with dynamic motivational quotes from Quotable API.
+- **Custom Milestone Configuration in Settings:** Dedicated "Goal Notifications" card with master toggle, preset milestone chips (50%, 65%, 75%, 80%), continuous milestone percentage slider (25% to 90%), and an instant test notification trigger with Android 13+ runtime permission handling.
+- **Offline-First Streak Calculation Engine (`GetStreakUseCase`):** Pure domain use case computing active consecutive daily streaks, longest historical best streak, and total goal met days directly from Room database without requiring network access.
+- **Active Streak Badge & Celebration on Dashboard:** Animated flame streak badge (`🔥 X Day Streak`) on top bar and celebratory goal achieved banner highlighting current streak upon hitting daily step targets.
+- **Lifetime Best Streak on Profile:** 2x2 Lifetime Statistics grid displaying Total Steps, Distance, Calories Burned, and Best Streak (`🔥 X Days`).
+- **Walking History Streak Summary Header:** Overview card in History screen tracking Current Streak, Best Streak, and Total Goals Hit with "Goal Met" checkmarks on daily log cards.
+- **Backend Streak Calculation Service & API (`GET /api/steps/streak`):** Async FastAPI endpoint and service method computing user streak records from PostgreSQL database.
+- **Automated Test Suite Expansion:** Added unit test suites for streak computation (`GetStreakUseCaseTest`), view models (`DashboardViewModelTest`, `HistoryViewModelTest`), and backend endpoint (`test_get_user_streak`).
+
+### Changed
+- **Sensor Delta Hook:** Wired `StepDeltaTracker` to trigger milestone and goal completion checks on every live step reading.
+- **Version Increment:** Bumped Android application version to `1.3.0` (`versionCode = 6`).
+
+---
+
 ## [1.2.2] - 2026-08-15
 
 ### Added
