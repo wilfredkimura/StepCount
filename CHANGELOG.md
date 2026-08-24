@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-08-24
+
+### Added
+- **Default Automatic Cloud Step Sync:** Daily step records and leaderboard rankings are automatically synchronized in the background every 15 minutes when online. Users can easily opt out at any time via a dedicated toggle in Settings while maintaining on-demand "Sync Now" functionality.
+- **3-Way Theme Mode Selector:** Replaced the binary dark mode switch with a Material Design 3 Segmented Control supporting **Light (`Icons.Rounded.LightMode`)**, **Dark (`Icons.Rounded.DarkMode`)**, and **System Default (`Icons.Rounded.SettingsBrightness`)** with real-time reactive theme application.
+- **Segmented Distance Units Selector (Kilometers vs. Miles):** Replaced the legacy on/off toggle with an intuitive 2-option Material 3 Segmented Control supporting **Kilometers (km)** and **Miles (mi)**, automatically formatting distance calculations across Dashboard, Profile, and History views.
+- **Firebase User Migration Utility (`backend/scripts/migrate_firebase_users.py`):** Standalone migration script utilizing Firebase Admin SDK `list_users` to scan and back-fill un-synced Firebase accounts directly into NeonDB PostgreSQL.
+
+### Changed
+- **Settings UI Modernization:** Redesigned preference cards with sleek Material Design 3 segmented button rows and pure vector icons without emojis.
+- **Version Increment:** Bumped Android application version to `1.4.0` (`versionCode = 10`).
+
+---
+
 ## [1.3.3] - 2026-08-24
 
 ### Added
