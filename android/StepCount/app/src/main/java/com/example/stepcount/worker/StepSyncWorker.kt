@@ -15,6 +15,16 @@ class StepSyncWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
+        val prefs = applicationContext.getSharedPreferences(
+            com.example.stepcount.core.util.Constants.PREFS_NAME,
+            Context.MODE_PRIVATE
+        )
+        val isAutoSyncEnabled = prefs.getBoolean(com.example.stepcount.core.util.Constants.KEY_AUTO_CLOUD_SYNC, true)
+        if (!isAutoSyncEnabled) {
+            android.util.Log.i("StepSyncWorker", "Auto cloud sync is disabled by user. Skipping background sync.")
+            return Result.success()
+        }
+
         val container = AppContainer(applicationContext)
 
         return try {
@@ -60,6 +70,13 @@ class StepSyncWorker(
                 ExistingPeriodicWorkPolicy.KEEP,
                 syncRequest
             )
+        }
+
+        /**
+         * Cancels periodic background sync worker when user opts out.
+         */
+        fun cancelPeriodicSync(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
         }
 
         /**

@@ -74,6 +74,26 @@ private val DarkColorScheme = darkColorScheme(
  */
 @Composable
 fun StepCountTheme(
+    themeMode: AppThemeMode,
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    val isSystemDark = isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        AppThemeMode.SYSTEM -> isSystemDark
+        AppThemeMode.DARK -> true
+        AppThemeMode.LIGHT -> false
+    }
+
+    StepCountTheme(
+        darkTheme = isDark,
+        dynamicColor = dynamicColor,
+        content = content
+    )
+}
+
+@Composable
+fun StepCountTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false, // Set to false by default to preserve custom athletic branding
     content: @Composable () -> Unit

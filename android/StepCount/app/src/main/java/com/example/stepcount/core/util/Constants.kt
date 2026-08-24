@@ -27,7 +27,10 @@ object Constants {
     const val KEY_LAST_HARDWARE_TIMESTAMP = "key_last_hardware_timestamp"
     const val KEY_LAST_RECORDED_DATE = "key_last_recorded_date"
     const val KEY_DARK_MODE = "key_dark_mode"
+    const val KEY_THEME_MODE = "key_theme_mode"
     const val KEY_STEP_UNITS = "key_step_units"
+    const val KEY_DISTANCE_UNIT = "key_distance_unit"
+    const val KEY_AUTO_CLOUD_SYNC = "key_auto_cloud_sync"
     const val KEY_GUEST_MODE = "key_guest_mode"
 
     // Goal and milestone notification preferences
