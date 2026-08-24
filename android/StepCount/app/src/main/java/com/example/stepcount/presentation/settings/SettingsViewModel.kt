@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import com.example.stepcount.core.theme.AppThemeMode
+import com.example.stepcount.worker.StepSyncWorker
+
 /**
  * ViewModel managing user preferences, goal notification milestones, manual synchronization, and account management.
  */
@@ -45,16 +48,21 @@ class SettingsViewModel(
      */
     private fun loadPreferences() {
         prefs?.let { p ->
+            val themeKey = p.getString(Constants.KEY_THEME_MODE, AppThemeMode.SYSTEM.storageKey)
+            val themeMode = AppThemeMode.fromStorageKey(themeKey)
             val isDark = p.getBoolean(Constants.KEY_DARK_MODE, false)
             val isKm = p.getBoolean(Constants.KEY_STEP_UNITS, true)
+            val isAutoSync = p.getBoolean(Constants.KEY_AUTO_CLOUD_SYNC, true)
             val isNotifEnabled = p.getBoolean(Constants.KEY_NOTIFICATIONS_ENABLED, true)
             val isPersistentEnabled = p.getBoolean(Constants.KEY_PERSISTENT_TRACKING_ENABLED, true)
             val milestonePct = p.getInt(Constants.KEY_MILESTONE_PERCENTAGE, Constants.DEFAULT_MILESTONE_PERCENTAGE)
 
             _uiState.update {
                 it.copy(
+                    themeMode = themeMode,
                     isDarkMode = isDark,
                     isKilometers = isKm,
+                    isAutoCloudSyncEnabled = isAutoSync,
                     isNotificationsEnabled = isNotifEnabled,
                     isPersistentTrackingEnabled = isPersistentEnabled,
                     milestonePercentage = milestonePct
@@ -63,14 +71,39 @@ class SettingsViewModel(
         }
     }
 
+    fun setThemeMode(mode: AppThemeMode) {
+        _uiState.update { it.copy(themeMode = mode, isDarkMode = mode == AppThemeMode.DARK) }
+        prefs?.edit()
+            ?.putString(Constants.KEY_THEME_MODE, mode.storageKey)
+            ?.putBoolean(Constants.KEY_DARK_MODE, mode == AppThemeMode.DARK)
+            ?.apply()
+    }
+
     fun toggleDarkMode(enabled: Boolean) {
-        _uiState.update { it.copy(isDarkMode = enabled) }
-        prefs?.edit()?.putBoolean(Constants.KEY_DARK_MODE, enabled)?.apply()
+        val mode = if (enabled) AppThemeMode.DARK else AppThemeMode.LIGHT
+        setThemeMode(mode)
+    }
+
+    fun setDistanceUnit(isKm: Boolean) {
+        _uiState.update { it.copy(isKilometers = isKm) }
+        prefs?.edit()
+            ?.putBoolean(Constants.KEY_STEP_UNITS, isKm)
+            ?.putString(Constants.KEY_DISTANCE_UNIT, if (isKm) "KM" else "MILES")
+            ?.apply()
     }
 
     fun toggleUnits(isKm: Boolean) {
-        _uiState.update { it.copy(isKilometers = isKm) }
-        prefs?.edit()?.putBoolean(Constants.KEY_STEP_UNITS, isKm)?.apply()
+        setDistanceUnit(isKm)
+    }
+
+    fun toggleAutoCloudSync(context: android.content.Context, enabled: Boolean) {
+        _uiState.update { it.copy(isAutoCloudSyncEnabled = enabled) }
+        prefs?.edit()?.putBoolean(Constants.KEY_AUTO_CLOUD_SYNC, enabled)?.apply()
+        if (enabled) {
+            StepSyncWorker.enqueuePeriodicSync(context.applicationContext)
+        } else {
+            StepSyncWorker.cancelPeriodicSync(context.applicationContext)
+        }
     }
 
     fun toggleNotifications(enabled: Boolean) {

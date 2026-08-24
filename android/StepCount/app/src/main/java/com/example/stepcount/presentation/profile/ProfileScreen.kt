@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -199,6 +200,13 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                val context = LocalContext.current
+                val prefs = context.getSharedPreferences(com.example.stepcount.core.util.Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+                val isKm = prefs.getBoolean(com.example.stepcount.core.util.Constants.KEY_STEP_UNITS, true)
+                val distanceKm = state.totalDistanceKm
+                val distanceDisplay = if (isKm) distanceKm else distanceKm * 0.621371
+                val unitLabel = if (isKm) "km" else "mi"
+
                 MetricCard(
                     label = "Total Steps",
                     value = "%,d".format(state.totalLifetimeSteps),
@@ -208,7 +216,7 @@ fun ProfileScreen(
                 )
                 MetricCard(
                     label = "Distance",
-                    value = String.format(Locale.US, "%.1f km", state.totalDistanceKm),
+                    value = String.format(Locale.US, "%.1f %s", distanceDisplay, unitLabel),
                     icon = Icons.Rounded.Straighten,
                     iconTint = MetricDistanceColor,
                     modifier = Modifier.weight(1f)

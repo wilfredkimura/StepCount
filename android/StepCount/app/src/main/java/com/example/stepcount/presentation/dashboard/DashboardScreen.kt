@@ -238,8 +238,13 @@ fun DashboardScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                val context = LocalContext.current
+                val prefs = context.getSharedPreferences(com.example.stepcount.core.util.Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+                val isKm = prefs.getBoolean(com.example.stepcount.core.util.Constants.KEY_STEP_UNITS, true)
                 val calories = (state.liveSteps * 0.04).toInt()
                 val distanceKm = (state.liveSteps * 0.762) / 1000.0
+                val distanceDisplay = if (isKm) distanceKm else distanceKm * 0.621371
+                val unitLabel = if (isKm) "km" else "mi"
                 val activeMin = (state.liveSteps / 100).toInt()
 
                 MetricCard(
@@ -251,7 +256,7 @@ fun DashboardScreen(
                 )
                 MetricCard(
                     label = "Distance",
-                    value = String.format(Locale.US, "%.1f km", distanceKm),
+                    value = String.format(Locale.US, "%.1f %s", distanceDisplay, unitLabel),
                     icon = Icons.Rounded.Straighten,
                     iconTint = MetricDistanceColor,
                     modifier = Modifier.weight(1f)

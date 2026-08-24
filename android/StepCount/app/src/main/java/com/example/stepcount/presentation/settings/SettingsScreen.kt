@@ -1,11 +1,14 @@
 package com.example.stepcount.presentation.settings
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
+import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -14,6 +17,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -21,6 +26,7 @@ import com.example.stepcount.core.components.ConfirmationDialog
 import com.example.stepcount.core.components.DangerButton
 import com.example.stepcount.core.components.PrimaryButton
 import com.example.stepcount.core.components.StepTopAppBar
+import com.example.stepcount.core.theme.AppThemeMode
 
 /**
  * Settings screen providing preferences, sync trigger, account sign-out, and account deletion.
@@ -87,43 +93,140 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // Dark Mode Toggle
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(imageVector = Icons.Rounded.DarkMode, contentDescription = null)
+                    // Theme Mode Selector (3-way Segmented Control)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.SettingsBrightness,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text("Dark Theme", style = MaterialTheme.typography.bodyLarge)
+                            Column {
+                                Text(
+                                    text = "Appearance Theme",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Choose light, dark, or follow system default",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                        Switch(
-                            checked = state.isDarkMode,
-                            onCheckedChange = { viewModel.toggleDarkMode(it) }
-                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            val modes = listOf(
+                                Triple(AppThemeMode.LIGHT, "Light", Icons.Rounded.LightMode),
+                                Triple(AppThemeMode.DARK, "Dark", Icons.Rounded.DarkMode),
+                                Triple(AppThemeMode.SYSTEM, "System", Icons.Rounded.SettingsBrightness)
+                            )
+                            modes.forEach { (mode, title, icon) ->
+                                val isSelected = state.themeMode == mode
+                                Surface(
+                                    onClick = { viewModel.setThemeMode(mode) },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = title,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 14.dp))
 
-                    // Distance Unit Toggle
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(imageVector = Icons.Rounded.Straighten, contentDescription = null)
+                    // Distance Units Selector (2-way Segmented Control)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Straighten,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text("Units (Metric km)", style = MaterialTheme.typography.bodyLarge)
+                            Column {
+                                Text(
+                                    text = "Distance Units",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Select preferred unit for distance calculations",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                        Switch(
-                            checked = state.isKilometers,
-                            onCheckedChange = { viewModel.toggleUnits(it) }
-                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            val units = listOf(
+                                Triple(true, "Kilometers (km)", Icons.Rounded.Straighten),
+                                Triple(false, "Miles (mi)", Icons.Rounded.NearMe)
+                            )
+                            units.forEach { (isKm, title, icon) ->
+                                val isSelected = state.isKilometers == isKm
+                                Surface(
+                                    onClick = { viewModel.setDistanceUnit(isKm) },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = title,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 14.dp))
 
                     // 24/7 Background Tracking Toggle
                     Row(
@@ -136,7 +239,7 @@ fun SettingsScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.DirectionsWalk,
+                                imageVector = Icons.AutoMirrored.Rounded.DirectionsWalk,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
                             )
@@ -254,56 +357,26 @@ fun SettingsScreen(
                     if (state.isNotificationsEnabled) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
+                        // Milestone Percentage Slider
                         Text(
-                            text = "Custom Milestone Alert Point",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = "Choose the progress point (e.g. 50% or 65%) to get a motivational alert.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Preset Milestone Percentage Chips
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf(50, 65, 75, 80).forEach { preset ->
-                                val selected = state.milestonePercentage == preset
-                                FilterChip(
-                                    selected = selected,
-                                    onClick = { viewModel.setMilestonePercentage(preset) },
-                                    label = { Text("$preset%") },
-                                    leadingIcon = if (selected) {
-                                        { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                                    } else null
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Continuous Slider for Custom Percentage Selection
-                        Text(
-                            text = "Milestone Threshold: ${state.milestonePercentage}% of goal",
+                            text = "Custom Milestone Alert: ${state.milestonePercentage}%",
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.primary
+                            fontWeight = FontWeight.Medium
                         )
-
                         Slider(
                             value = state.milestonePercentage.toFloat(),
                             onValueChange = { viewModel.setMilestonePercentage(it.toInt()) },
                             valueRange = 25f..90f,
-                            steps = 12
+                            steps = 12,
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary
+                            )
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
-                        // Test Notification Trigger Button
+                        // Test Notification Trigger
                         OutlinedButton(
                             onClick = {
                                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && !com.example.stepcount.sensor.hasNotificationPermission(context)) {
@@ -329,9 +402,9 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Data & Synchronization Section
+            // Cloud Synchronization Section
             Text(
-                text = "Data Synchronization",
+                text = "Cloud Backup & Sync",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -346,8 +419,45 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    // Automatic Cloud Sync Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.CloudSync,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Automatic Cloud Sync",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Automatically back up daily steps and update leaderboard rankings in background",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = state.isAutoCloudSyncEnabled,
+                            onCheckedChange = { viewModel.toggleAutoCloudSync(context, it) }
+                        )
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
                     Text(
-                        text = "Sync pending step records to the server database.",
+                        text = "Manually upload pending step records to the server database right now.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -387,7 +497,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Icon(imageVector = Icons.Rounded.Logout, contentDescription = null)
+                Icon(imageVector = Icons.AutoMirrored.Rounded.Logout, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Sign Out")
             }
@@ -417,7 +527,7 @@ fun SettingsScreen(
 
             // App Version Footer
             Text(
-                text = "StepCount Version 1.3.3",
+                text = "StepCount Version 1.4.0",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
