@@ -9,13 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.3.3] - 2026-08-24
+
 ### Added
+- **OEM-Specific Sensor Hub & Driver Protection (`StepDeltaTracker`):** Added specialized filtering to protect against deep-sleep driver flushes on Redmi (MIUI/HyperOS) and Oppo (ColorOS) devices, discarding transient 0 readings and preventing uncalibrated sensor resets from triggering phantom step spikes.
+- **Universal Physical Cadence & Anomaly Filter:** Replaced narrow time-window anomaly checks with a universal human speed limit ($5.0\text{ steps/sec}$ or max $3,000\text{ steps}$ per event across all elapsed time windows), preventing multi-million step jumps after extended idle intervals.
+- **Atomic Preferences Commits:** Switched to synchronous `.commit()` across all hardware baseline updates to eliminate multi-threaded state race conditions between foreground services, workers, and UI listeners.
 - **Explicit User Registration Endpoint (`POST /api/v1/auth/register`):** FastAPI backend endpoint that creates and commits user profiles to NeonDB PostgreSQL upon registration, returning HTTP 201 Created with verified user profile data.
 - **Guaranteed Registration Provisioning on Android:** Updated `AuthRepositoryImpl.register()` to explicitly call `POST /api/v1/auth/register` and await PostgreSQL database confirmation before completing registration, preventing orphaned Firebase accounts.
 - **Lightweight Firebase-Only Login on Android:** Optimized `AuthRepositoryImpl.login()` to authenticate directly with Firebase Auth without blocking on remote database requests, ensuring instant logins even on cold backend instances.
 - **Vercel Keep-Alive Cron Service (`vercel-cron/`):** Lightweight serverless cron project running every 10 minutes to keep the FastAPI backend on Render awake 24/7.
 
----
+### Fixed
+- **Driver Drop "Reboot" Assumption Bug:** Resolved issue where sensor hub driver drops to a lower reading were incorrectly treated as phone restarts and added as full raw deltas to today's step count.
+- **First-Run Phantom Delta:** Guaranteed that first sensor readings and fresh installs never calculate an initial delta, adopting the hardware counter as a clean zero-baseline.
+
+### Changed
+- **Version Increment:** Bumped Android application version to `1.3.3` (`versionCode = 9`).
 
 ## [1.3.2] - 2026-08-22
 
